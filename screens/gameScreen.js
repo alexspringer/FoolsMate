@@ -1,249 +1,289 @@
 import React, { useState, useEffect } from "react";
-import { StyleSheet, Text, View, Image, TouchableOpacity } from "react-native";
+import { StyleSheet, Button, Text, View, Image, TouchableOpacity } from "react-native";
 
 export default function Game() {
   const [board, setBoard] = useState([]);
+  const [visualBoard, setVisualBoard] = useState([]);
 
-  const loadBoardState = () => {
+  const [startPosition, setStartPosition] = useState();
+  const [endPosition, setEndposition] = useState();
+
+  //A square has a rank and file, basically row and column
+  //A square has a visual representation
+  //A square can have a piece
+  //A square can be selected
+  function Square(file, rank, color, piece) {
+    this.file = file;
+    this.rank = rank;
+    this.piece = piece;
+    this.isSelected = false;
+    if (piece) {
+      if (color == "light") {
+        this.visual = (
+          <TouchableOpacity
+            style={styles.lightSquare}
+            onPress={() => handleSquarePress(file, rank)}
+          >
+            {this.piece.image}
+          </TouchableOpacity>
+        );
+      } else {
+        this.visual = (
+          <TouchableOpacity
+            style={styles.darkSquare}
+            onPress={() => handleSquarePress(file, rank)}
+          >
+            {this.piece.image}
+          </TouchableOpacity>
+        );
+      }
+    } else {
+      if (color == "light") {
+        this.visual = (
+          <TouchableOpacity
+            style={styles.lightSquare}
+            onPress={() => handleSquarePress(file, rank)}
+          ></TouchableOpacity>
+        );
+      } else {
+        this.visual = (
+          <TouchableOpacity
+            style={styles.darkSquare}
+            onPress={() => handleSquarePress(file, rank)}
+          ></TouchableOpacity>
+        );
+      }
+    }
+  }
+
+  function Piece(type, color, image) {
+    this.type = type;
+    this.color = color;
+    this.image = image;
+  }
+
+  const loadBoard = () => {
+    var flag = true;
     var tempBoard = [];
+    var visualBoard = [];
+
+    //each row and column of a chess board have 8 squares.
     for (var i = 0; i < 8; ++i) {
       var row = [];
+      var visualRow = [];
+      flag = !flag;
       for (var j = 0; j < 8; ++j) {
-        var piece;
-        if (i == 0) {
-          piece = backRankSetup(j, "white");
+        var square;
+
+        //light square
+        if (!flag) {
+          square = new Square(i, j, "light", loadPiece(i, j));
+          flag = !flag;
         }
 
-        if (i == 1) {
-          piece = { type: "pawn", color: "white" };
+        //dark square
+        else {
+          square = new Square(i, j, "dark", loadPiece(i, j));
+          flag = !flag;
         }
-
-        if(1 < i && i < 6){
-          piece = null;
-        }
-
-        if (i == 6) {
-          piece = { type: "pawn", color: "black" };
-        }
-
-        if (i == 7) {
-          piece = backRankSetup(j, "black");
-        }
-        row.push(piece);
+        row.push(square);
+        visualRow.push(square.visual);
       }
+      visualBoard.push(<View style={styles.boardRow}>{visualRow}</View>);
       tempBoard.push(row);
     }
-    tempBoard.forEach(e => {console.log(e)});
     setBoard(board.concat(tempBoard));
+    setVisualBoard(visualBoard);
   };
 
-  const backRankSetup = (j, color) => {
+  const loadPiece = (i, j) => {
     var piece;
-    if (j == 0 || j == 7) {
-      piece = { type: "rook", color: color };
+
+    //white backrank
+    if (i == 0) {
+      //rooks
+      if (j == 0 || j == 7) {
+        piece = new Piece("rook", "white", loadPieceImage("white", "rook"));
+      }
+      //knights
+      if (j == 1 || j == 6) {
+        piece = new Piece("knight", "white", loadPieceImage("white", "knight"));
+      }
+      //bishops
+      if (j == 2 || j == 5) {
+        piece = new Piece("bishop", "white", loadPieceImage("white", "bishop"));
+      }
+      //queen
+      if (j == 3) {
+        piece = new Piece("queen", "white", loadPieceImage("white", "queen"));
+      }
+      //king
+      if (j == 4) {
+        piece = new Piece("king", "white", loadPieceImage("white", "king"));
+      }
     }
-    if (j == 1 || j == 6) {
-      piece = { type: "knight", color: color };
+
+    //white pawns
+    else if (i == 1) {
+      piece = new Piece("pawn", "white", loadPieceImage("white", "pawn"));
     }
-    if (j == 2 || j == 5) {
-      piece = { type: "bishop", color: color };
+
+    //black pawns
+    else if (i == 6) {
+      piece = new Piece("pawn", "black", loadPieceImage("black", "pawn"));
     }
-    if (j == 3) {
-      piece = { type: "queen", color: color };
+
+    //black backrank
+    else if (i == 7) {
+      //rooks
+      if (j == 0 || j == 7) {
+        piece = new Piece("rook", "black", loadPieceImage("black", "rook"));
+      }
+      //knights
+      if (j == 1 || j == 6) {
+        piece = new Piece("knight", "black", loadPieceImage("black", "knight"));
+      }
+      //bishops
+      if (j == 2 || j == 5) {
+        piece = new Piece("bishop", "black", loadPieceImage("black", "bishop"));
+      }
+      //queen
+      if (j == 3) {
+        piece = new Piece("queen", "black", loadPieceImage("black", "queen"));
+      }
+      //king
+      if (j == 4) {
+        piece = new Piece("king", "black", loadPieceImage("black", "king"));
+      }
     }
-    if (j == 4) {
-      piece = { type: "king", color: color };
+    //no piece
+    else {
+      piece = null;
     }
     return piece;
   };
 
-  //Given the row and column index, determine if a piece should be loaded onto that square,
-  //and what piece should be loaded.
-  const loadPiece = (i, j) => {
-    var piece;
-
-    if (i == 0) {
-      //rook
-      if (j == 0 || j == 7) {
-        piece = (
+  const loadPieceImage = (color, type) => {
+    var image;
+    if (color == "white") {
+      if (type == "pawn") {
+        image = (
           <Image
             style={styles.piece}
-            source={require("../assets/BlackRook.png")}
+            source={require("../assets/WhitePawn.png")}
           ></Image>
         );
-      }
-
-      //knight
-      if (j == 1 || j == 6) {
-        piece = (
-          <Image
-            style={styles.piece}
-            source={require("../assets/BlackKnight.png")}
-          ></Image>
-        );
-      }
-
-      //bishop
-      if (j == 2 || j == 5) {
-        piece = (
-          <Image
-            style={styles.piece}
-            source={require("../assets/BlackBishop.png")}
-          ></Image>
-        );
-      }
-
-      //queen
-      if (j == 3) {
-        piece = (
-          <Image
-            style={styles.piece}
-            source={require("../assets/BlackQueen.png")}
-          ></Image>
-        );
-      }
-
-      //king
-      if (j == 4) {
-        piece = (
-          <Image
-            style={styles.piece}
-            source={require("../assets/BlackKing.png")}
-          ></Image>
-        );
-      }
-    } else if (i == 1) {
-      piece = (
-        <Image
-          style={styles.piece}
-          source={require("../assets/BlackPawn.png")}
-        ></Image>
-      );
-    } else if (i == 6) {
-      piece = (
-        <Image
-          style={styles.piece}
-          source={require("../assets/WhitePawn.png")}
-        ></Image>
-      );
-    } else if (i == 7) {
-      //rook
-      if (j == 0 || j == 7) {
-        piece = (
+      } else if (type == "rook") {
+        image = (
           <Image
             style={styles.piece}
             source={require("../assets/WhiteRook.png")}
           ></Image>
         );
-      }
-
-      //knight
-      if (j == 1 || j == 6) {
-        piece = (
+      } else if (type == "knight") {
+        image = (
           <Image
             style={styles.piece}
             source={require("../assets/WhiteKnight.png")}
           ></Image>
         );
-      }
-
-      //bishop
-      if (j == 2 || j == 5) {
-        piece = (
+      } else if (type == "bishop") {
+        image = (
           <Image
             style={styles.piece}
             source={require("../assets/WhiteBishop.png")}
           ></Image>
         );
-      }
-
-      //queen
-      if (j == 3) {
-        piece = (
+      } else if (type == "king") {
+        image = (
+          <Image
+            style={styles.piece}
+            source={require("../assets/WhiteKing.png")}
+          ></Image>
+        );
+      } else if (type == "queen") {
+        image = (
           <Image
             style={styles.piece}
             source={require("../assets/WhiteQueen.png")}
           ></Image>
         );
       }
-
-      //king
-      if (j == 4) {
-        piece = (
+    } else {
+      if (type == "pawn") {
+        image = (
           <Image
             style={styles.piece}
-            source={require("../assets/WhiteKing.png")}
+            source={require("../assets/BlackPawn.png")}
+          ></Image>
+        );
+      } else if (type == "rook") {
+        image = (
+          <Image
+            style={styles.piece}
+            source={require("../assets/BlackRook.png")}
+          ></Image>
+        );
+      } else if (type == "knight") {
+        image = (
+          <Image
+            style={styles.piece}
+            source={require("../assets/BlackKnight.png")}
+          ></Image>
+        );
+      } else if (type == "bishop") {
+        image = (
+          <Image
+            style={styles.piece}
+            source={require("../assets/BlackBishop.png")}
+          ></Image>
+        );
+      } else if (type == "king") {
+        image = (
+          <Image
+            style={styles.piece}
+            source={require("../assets/BlackKing.png")}
+          ></Image>
+        );
+      } else if (type == "queen") {
+        image = (
+          <Image
+            style={styles.piece}
+            source={require("../assets/BlackQueen.png")}
           ></Image>
         );
       }
     }
-    return piece;
+    return image;
   };
 
-  //Build the board that the user can see.
-  const createBoard = () => {
-    var board = [];
-    var key = 0;
-    for (var i = 0; i < 8; ++i) {
-      //create a row
-      var row = [];
-      for (var j = 0; j < 8; ++j) {
-        //rows alternate between starting with a light square and dark square,
-        //this if statement allows for that to happen.
-        if (i % 2 == 0) {
-          //Likewise, squares in a row alternate colors so this if block, allows that to happen.
-          if (j % 2 == 0) {
-            row.push(createSquare(key, i, j, "light"));
-          } else {
-            row.push(createSquare(key, i, j, "dark"));
-          }
-        } else {
-          if (j % 2 == 0) {
-            row.push(createSquare(key, i, j, "dark"));
-          } else {
-            row.push(createSquare(key, i, j, "light"));
-          }
-        }
-        ++key;
-      }
-      //each loop through we add the row we created to the board array, which is what is ultimately returned.
-      board.push(<View style={styles.boardRow}>{row}</View>);
-    }
-    return board;
+  const handleSquarePress = (i, j) => {
+    var tempBoard = board.slice();
+    //console.log(tempBoard[i][j].piece.type);
+    console.log(tempBoard);
+    /*tempBoard[i][j].visual(
+      <TouchableOpacity
+        style={styles.lightSquare}
+        onPress={() => handleSquarePress(file, rank)}
+      >
+        {this.piece.image}
+      </TouchableOpacity>
+    );*/
+    //setBoard(tempBoard);
   };
 
-  const createSquare = (key, i, j, squareType) => {
-    if (squareType === "light") {
-      return (
-        <TouchableOpacity
-          onPress={() => console.log("light")}
-          key={key}
-          style={styles.lightSquare}
-        >
-          {loadPiece(i, j)}
-        </TouchableOpacity>
-      );
-    } else {
-      return (
-        <TouchableOpacity
-          onPress={() => console.log("dark")}
-          key={key}
-          style={styles.darkSquare}
-        >
-          {loadPiece(i, j)}
-        </TouchableOpacity>
-      );
-    }
-  };
-
-  //only executes on the first render. This is where the boar is loaded.
-  useEffect(() => {
-    loadBoardState();
-  }, []);
+  const temp = (i, j) => {
+    var tempBoard = board;
+    tempBoard[i][j] = tempBoard[startPosition[0]][startPosition[1]];
+    tempBoard[startPosition[0]][startPosition[1]] = null;
+    setBoard(tempBoard);
+  }
 
   return (
     <View style={styles.screen}>
-      <View style={styles.board}>{createBoard()}</View>
+      <Button onPress={()=>loadBoard()}color="red" title="start game"/>
+      <Text>{startPosition}</Text>
+      <View style={styles.board}>{visualBoard}</View>
     </View>
   );
 }
@@ -269,6 +309,14 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "green",
+    width: "12.5%",
+    height: 50,
+  },
+
+  selectedSquare: {
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "yellow",
     width: "12.5%",
     height: 50,
   },
