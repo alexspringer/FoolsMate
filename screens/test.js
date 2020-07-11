@@ -215,7 +215,10 @@ const Test = (props) => {
     }
     //no piece
     else {
-      piece = null;
+      piece = {
+        type: "n/a",
+        color: "n/a",
+      };
     }
 
     return piece;
@@ -233,36 +236,76 @@ const Test = (props) => {
     return board;
   };
 
+  //pieces keeps track of the state of all pieces on the board.
   const [pieces, setPieces] = useState(loadPieces());
-
-  //Is there a square selected?
+  //Selected keeps track of the square that the user has last pressed.
   const [selected, setSelected] = useState(false);
 
-
-
-  const [moveArray, setMoveArray] = useState([]); 
-  const [moveMode, setMoveMode] = useState(false);
+  const [moveArray, setMoveArray] = useState([]);
+  const [possibleMoves, setPossibleMoves] = useState([]);
 
   const handleSelect = (key, file, rank) => {
     setSelected(key);
-    setMoveArray(moveArray.concat([file,rank]));
+    setMoveArray(moveArray.concat([file, rank]));
+    findPossibleMoves([file, rank]);
+  };
+
+  const findPossibleMoves = (start) => {
+    //no possible moves
+    if (pieces[start[0]][start[1]].type == "n/a") {
+      return;
+    } else if (pieces[start[0]][start[1]].type == "pawn") {
+      //possibleMoves = movePawn();
+    } else if (pieces[start[0]][start[1]].type == "rook") {
+      setPossibleMoves(moveRook(start));
+    } else if (pieces[start[0]][start[1]].type == "knight") {
+      //possibleMoves = moveKnight();
+    } else if (pieces[start[0]][start[1]].type == "bishop") {
+      //possibleMoves = moveBishop();
+    } else if (pieces[start[0]][start[1]].type == "king") {
+      //possibleMoves = moveKing();
+    } else if (pieces[start[0]][start[1]].type == "queen") {
+      //possibleMoves = moveQueen();
+    }
   };
 
   const movePiece = () => {
-    if(moveArray.length >= 4){
+    if (moveArray.length >= 4) {
       var start = [moveArray[0], moveArray[1]];
       var end = [moveArray[2], moveArray[3]];
+
+      //If a player selects a square with no piece on it.
+      //Empty the move array.
+
+      if (pieces[start[0]][start[1]].type == "n/a") {
+        setMoveArray([]);
+        return;
+      }
+
       var temp = pieces;
 
       temp[end[0]][end[1]] = temp[start[0]][start[1]];
-      temp[start[0]][start[1]] = null;
+      temp[start[0]][start[1]] = {
+        type: "n/a",
+        color: "n/a",
+        image: <Image />,
+      };
       setMoveArray([]);
+      setPossibleMoves([]);
       setPieces(temp);
+    }
+  };
 
-    }
-    else{
-    }
-  }
+  const isPossibleMove = (key) => {
+    var bool = false;
+    possibleMoves.forEach(function (e) {
+      if (key == e[0] * 8 + e[1]) {
+        console.log(e[0] * 8 + e[1]);
+        bool = true;
+      }
+    });
+    return bool;
+  };
 
   const createBoard = () => {
     movePiece();
@@ -282,6 +325,7 @@ const Test = (props) => {
                 id={key}
                 file={i}
                 rank={j}
+                isPossibleMove={isPossibleMove(key)}
                 active={key === selected}
                 onSquarePress={handleSelect}
                 style={styles.lightSquare}
@@ -294,6 +338,7 @@ const Test = (props) => {
                 id={key}
                 file={i}
                 rank={j}
+                isPossibleMove={isPossibleMove(key)}
                 active={key === selected}
                 onSquarePress={handleSelect}
                 style={styles.lightSquare}
@@ -311,6 +356,7 @@ const Test = (props) => {
                 rank={j}
                 key={key}
                 id={key}
+                isPossibleMove={isPossibleMove(key)}
                 active={key === selected}
                 onSquarePress={handleSelect}
                 style={styles.darkSquare}
@@ -323,6 +369,7 @@ const Test = (props) => {
                 rank={j}
                 key={key}
                 id={key}
+                isPossibleMove={isPossibleMove(key)}
                 active={key === selected}
                 onSquarePress={handleSelect}
                 style={styles.darkSquare}
@@ -341,9 +388,105 @@ const Test = (props) => {
     return board;
   };
 
+  const moveRook = (start) => {
+    var possibleMoves = [];
+    var color = pieces[start[0]][start[1]].color;
+    var oppositeColor;
+
+    if (color == "white") {
+      oppositeColor = "black";
+    } else {
+      oppositeColor = "white";
+    }
+
+    //move forward
+    for (var i = start[0] + 1; i < 8; ++i) {
+      //Friendly piece blocking
+      if (pieces[i][start[1]].color == color) {
+        flag = false;
+      }
+      //Hostile piece blocking
+      if (pieces[i][start[1]].color == oppositeColor && flag) {
+        possibleMoves.push([i, start[1]]);
+        flag = false;
+      }
+      //Open Square
+      if (flag) {
+        possibleMoves.push([i, start[1]]);
+      }
+    }
+    flag = true;
+
+    //move down
+    for (var i = start[0] - 1; i >= 0; --i) {
+      //Friendly piece blocking
+      if (pieces[i][start[1]].color == color) {
+        flag = false;
+      }
+      //Hostile piece blocking
+      if (pieces[i][start[1]].color == oppositeColor && flag) {
+        possibleMoves.push([i, start[1]]);
+        flag = false;
+      }
+      //Open Square
+      if (flag) {
+        possibleMoves.push([i, start[1]]);
+      }
+    }
+    flag = true;
+
+    //move right
+    for (var j = start[1] + 1; j < 8; ++j) {
+      //Friendly piece blocking
+      if (pieces[start[0]][j].color == color) {
+        flag = false;
+      }
+      //Hostile piece blocking
+      if (pieces[start[0]][j].color == oppositeColor && flag) {
+        possibleMoves.push([start[0], j]);
+        flag = false;
+      }
+      //Open Square
+      if (flag) {
+        possibleMoves.push([start[0], j]);
+      }
+    }
+    flag = true;
+
+    //move left
+    for (var j = start[1] - 1; j >= 0; --j) {
+      //Friendly piece blocking
+      if (pieces[start[0]][j].color == color) {
+        flag = false;
+      }
+
+      //Hostile piece blocking
+      if (pieces[start[0]][j].color == oppositeColor && flag) {
+        possibleMoves.push([start[0], j]);
+        flag = false;
+      }
+
+      //Open square
+      if (flag) {
+        possibleMoves.push([start[0], j]);
+      }
+    }
+    flag = true;
+
+    return possibleMoves;
+  };
+
+  const movePawn = () => {
+    return possibleMoves;
+  };
+
+  const moveKing = () => {
+    return possibleMoves;
+  };
+
   return (
     <View style={styles.screen}>
-      <Text style={{justifyContent:"center",}}>{moveArray}</Text>
+      <Text style={{ justifyContent: "center" }}>{possibleMoves}</Text>
       <View style={styles.board}>{createBoard()}</View>
     </View>
   );
@@ -354,7 +497,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    //backgroundColor: "gray",
     marginTop: "20%",
   },
 
@@ -368,24 +510,10 @@ const styles = StyleSheet.create({
     flexDirection: "row",
   },
 
-  dark: {
-    backgroundColor: "green",
-  },
-  light: {
-    backgroundColor: "#f0f0f0",
-  },
   darkSquare: {
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "green",
-    width: "12.5%",
-    height: 50,
-  },
-
-  selectedSquare: {
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "yellow",
+    backgroundColor: "#1BC91B",
     width: "12.5%",
     height: 50,
   },
