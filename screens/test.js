@@ -266,6 +266,8 @@ const Test = (props) => {
     }
   };
 
+  //Move a piece in the pieces array so the board rerenders and
+  //displays the players move. WIP
   const movePiece = () => {
     if (moveArray.length >= 4) {
       var start = [moveArray[0], moveArray[1]];
@@ -293,6 +295,9 @@ const Test = (props) => {
     }
   };
 
+  //Loop through the possibleMoves state array and calculate the key.
+  //This is to let a square know if a piece can move to it so it will
+  //display a circle notifying the user of the possible move.
   const isPossibleMove = (key) => {
     var bool = false;
     possibleMoves.forEach(function (e) {
@@ -379,11 +384,12 @@ const Test = (props) => {
         ++key;
         ++j;
       });
-      board.push(<View style={styles.boardRow}>{row}</View>);
+      board.push(<View key={i} style={styles.boardRow}>{row}</View>);
     }
     return board;
   };
 
+  //Simple helper function to get the opposite color of the color passed in.
   const getOppositeColor = (color) => {
     if (color == "white") {
       return "black";
@@ -392,6 +398,8 @@ const Test = (props) => {
     }
   };
 
+  //Helper function for finding the possible moves of rooks, bishops,
+  //and queens, since they all move in a similar fashion.
   const validMoveChecker = (i, j, color, flag) => {
     var possibleMove = [];
     var oppositeColor = getOppositeColor(color);
@@ -411,14 +419,15 @@ const Test = (props) => {
     return { possibleMove: possibleMove, flag: flag };
   };
 
+  //Scan the board for all possible moves the selected rook can make.
   const moveBishop = (start) => {
     var possibleMoves = [];
     var color = pieces[start[0]][start[1]].color;
-    var result;
-    var flag = true;
+    var result; //Result of ValidMoveChecker, which returns an object with the fields possibleMove, and flag
+    var flag = true; //Flag is set to false once there is a piece that is blocking movement in the current direction of the scan.
 
     //up and right
-    var j = start[1] + 1;
+    var j = start[1] + 1; //+1 and later -1 will be to exclude the pieces current position as a possible move.
     for (var i = start[0] + 1; i < 8; ++i) {
       if (j < 8) {
         result = validMoveChecker(i, j, color, flag);
@@ -429,7 +438,7 @@ const Test = (props) => {
         ++j;
       }
     }
-    flag = true;
+    flag = true; //Reset the flag because we are going to move in another direction now.
 
     //down and left
     j = start[1] - 1;
@@ -476,6 +485,9 @@ const Test = (props) => {
     return possibleMoves;
   };
 
+  //Scan the board for all possible moves the selected rook can make.
+  //See moveBishop(start) for more information, the functions are very similar
+  //and moveBishop has additional documentation.
   const moveRook = (start) => {
     var possibleMoves = [];
     var color = pieces[start[0]][start[1]].color;
@@ -525,13 +537,15 @@ const Test = (props) => {
     return possibleMoves;
   };
 
+  //queen is just the combination of a rook and bishop so I just call their
+  //possible move finding methods and combine the results.
   const moveQueen = (start) => {
     var rookMoves = moveRook(start);
     var bishopMoves = moveBishop(start);
     var queenMoves = rookMoves.concat(bishopMoves);
 
     return queenMoves;
-  }
+  };
 
   return (
     <View style={styles.screen}>
