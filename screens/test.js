@@ -255,17 +255,14 @@ const Test = (props) => {
     if (pieces[start[0]][start[1]].type == "n/a") {
       return;
     } else if (pieces[start[0]][start[1]].type == "pawn") {
-      //possibleMoves = movePawn();
     } else if (pieces[start[0]][start[1]].type == "rook") {
       setPossibleMoves(moveRook(start));
     } else if (pieces[start[0]][start[1]].type == "knight") {
-      //possibleMoves = moveKnight();
     } else if (pieces[start[0]][start[1]].type == "bishop") {
-      //possibleMoves = moveBishop();
+      setPossibleMoves(moveBishop(start));
     } else if (pieces[start[0]][start[1]].type == "king") {
-      //possibleMoves = moveKing();
     } else if (pieces[start[0]][start[1]].type == "queen") {
-      //possibleMoves = moveQueen();
+      setPossibleMoves(moveQueen(start));
     }
   };
 
@@ -300,7 +297,6 @@ const Test = (props) => {
     var bool = false;
     possibleMoves.forEach(function (e) {
       if (key == e[0] * 8 + e[1]) {
-        console.log(e[0] * 8 + e[1]);
         bool = true;
       }
     });
@@ -388,101 +384,154 @@ const Test = (props) => {
     return board;
   };
 
+  const getOppositeColor = (color) => {
+    if (color == "white") {
+      return "black";
+    } else {
+      return "white";
+    }
+  };
+
+  const validMoveChecker = (i, j, color, flag) => {
+    var possibleMove = [];
+    var oppositeColor = getOppositeColor(color);
+    //Friendly piece blocking
+    if (pieces[i][j].color == color) {
+      flag = false;
+    }
+    //Hostile piece blocking
+    if (pieces[i][j].color == oppositeColor && flag) {
+      possibleMove = [i, j];
+      flag = false;
+    }
+    //Open Square
+    if (flag) {
+      possibleMove = [i, j];
+    }
+    return { possibleMove: possibleMove, flag: flag };
+  };
+
+  const moveBishop = (start) => {
+    var possibleMoves = [];
+    var color = pieces[start[0]][start[1]].color;
+    var result;
+    var flag = true;
+
+    //up and right
+    var j = start[1] + 1;
+    for (var i = start[0] + 1; i < 8; ++i) {
+      if (j < 8) {
+        result = validMoveChecker(i, j, color, flag);
+        if (result.possibleMove) {
+          possibleMoves.push(result.possibleMove);
+        }
+        flag = result.flag;
+        ++j;
+      }
+    }
+    flag = true;
+
+    //down and left
+    j = start[1] - 1;
+    for (var i = start[0] - 1; i >= 0; --i) {
+      if (j >= 0) {
+        result = validMoveChecker(i, j, color, flag);
+        if (result.possibleMove) {
+          possibleMoves.push(result.possibleMove);
+        }
+        flag = result.flag;
+        --j;
+      }
+    }
+    flag = true;
+
+    //up and left
+    j = start[1] - 1;
+    for (var i = start[0] + 1; i < 8; ++i) {
+      if (j >= 0) {
+        result = validMoveChecker(i, j, color, flag);
+        if (result.possibleMove) {
+          possibleMoves.push(result.possibleMove);
+        }
+        flag = result.flag;
+        --j;
+      }
+    }
+    flag = true;
+
+    //down and right
+    j = start[1] + 1;
+    for (var i = start[0] - 1; i >= 0; --i) {
+      if (j < 8) {
+        result = validMoveChecker(i, j, color, flag);
+        if (result.possibleMove) {
+          possibleMoves.push(result.possibleMove);
+        }
+        flag = result.flag;
+        ++j;
+      }
+    }
+    flag = true;
+
+    return possibleMoves;
+  };
+
   const moveRook = (start) => {
     var possibleMoves = [];
     var color = pieces[start[0]][start[1]].color;
-    var oppositeColor;
-
-    if (color == "white") {
-      oppositeColor = "black";
-    } else {
-      oppositeColor = "white";
-    }
+    var flag = true;
+    var result;
 
     //move forward
     for (var i = start[0] + 1; i < 8; ++i) {
-      //Friendly piece blocking
-      if (pieces[i][start[1]].color == color) {
-        flag = false;
+      result = validMoveChecker(i, start[1], color, flag);
+      if (result.possibleMove) {
+        possibleMoves.push(result.possibleMove);
       }
-      //Hostile piece blocking
-      if (pieces[i][start[1]].color == oppositeColor && flag) {
-        possibleMoves.push([i, start[1]]);
-        flag = false;
-      }
-      //Open Square
-      if (flag) {
-        possibleMoves.push([i, start[1]]);
-      }
+      flag = result.flag;
     }
     flag = true;
 
     //move down
     for (var i = start[0] - 1; i >= 0; --i) {
-      //Friendly piece blocking
-      if (pieces[i][start[1]].color == color) {
-        flag = false;
+      result = validMoveChecker(i, start[1], color, flag);
+      if (result.possibleMove) {
+        possibleMoves.push(result.possibleMove);
       }
-      //Hostile piece blocking
-      if (pieces[i][start[1]].color == oppositeColor && flag) {
-        possibleMoves.push([i, start[1]]);
-        flag = false;
-      }
-      //Open Square
-      if (flag) {
-        possibleMoves.push([i, start[1]]);
-      }
+      flag = result.flag;
     }
     flag = true;
 
     //move right
     for (var j = start[1] + 1; j < 8; ++j) {
-      //Friendly piece blocking
-      if (pieces[start[0]][j].color == color) {
-        flag = false;
+      result = validMoveChecker(start[0], j, color, flag);
+      if (result.possibleMove) {
+        possibleMoves.push(result.possibleMove);
       }
-      //Hostile piece blocking
-      if (pieces[start[0]][j].color == oppositeColor && flag) {
-        possibleMoves.push([start[0], j]);
-        flag = false;
-      }
-      //Open Square
-      if (flag) {
-        possibleMoves.push([start[0], j]);
-      }
+      flag = result.flag;
     }
     flag = true;
 
     //move left
     for (var j = start[1] - 1; j >= 0; --j) {
-      //Friendly piece blocking
-      if (pieces[start[0]][j].color == color) {
-        flag = false;
+      result = validMoveChecker(start[0], j, color, flag);
+      if (result.possibleMove) {
+        possibleMoves.push(result.possibleMove);
       }
-
-      //Hostile piece blocking
-      if (pieces[start[0]][j].color == oppositeColor && flag) {
-        possibleMoves.push([start[0], j]);
-        flag = false;
-      }
-
-      //Open square
-      if (flag) {
-        possibleMoves.push([start[0], j]);
-      }
+      flag = result.flag;
     }
     flag = true;
 
     return possibleMoves;
   };
 
-  const movePawn = () => {
-    return possibleMoves;
-  };
+  const moveQueen = (start) => {
+    var rookMoves = moveRook(start);
+    var bishopMoves = moveBishop(start);
+    var queenMoves = rookMoves.concat(bishopMoves);
 
-  const moveKing = () => {
-    return possibleMoves;
-  };
+    return queenMoves;
+  }
 
   return (
     <View style={styles.screen}>
