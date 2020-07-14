@@ -140,6 +140,7 @@ const GameScreen = (props) => {
         piece = {
           type: "king",
           color: "white",
+          castlingRights: true,
           image: loadPieceImage("white", "king"),
         };
       }
@@ -204,6 +205,7 @@ const GameScreen = (props) => {
         piece = {
           type: "king",
           color: "black",
+          castlingRights: true,
           image: loadPieceImage("black", "king"),
         };
       }
@@ -279,7 +281,6 @@ const GameScreen = (props) => {
   const validatePossibleMoves = (start, possibleMoves) => {
     var color = pieces[start[0]][start[1]].color;
     var kingPosition = findKing(color);
-    //var board = [...pieces];
     var board = [];
     //deep copy the pieces array.
     for (var i = 0; i < 8; ++i) {
@@ -313,6 +314,8 @@ const GameScreen = (props) => {
     return newArray;
   };
 
+  //Given a color, and a board state, scan the board to see
+  //if that king is in check from another piece.
   const scanForCheck = (board, color) => {
     var kingPosition = findKing(color);
     var possibleMoves = [];
@@ -329,6 +332,7 @@ const GameScreen = (props) => {
     return false;
   };
 
+  //Given a color, scan the board for that king and return its position
   const findKing = (color) => {
     for (var i = 0; i < 8; ++i) {
       for (var j = 0; j < 8; ++j) {
@@ -365,6 +369,58 @@ const GameScreen = (props) => {
       if (temp[end[0]][end[1]].color != temp[start[0]][start[1]].color) {
         possibleMoves.forEach(function (m) {
           if (end[0] == m[0] && end[1] == m[1]) {
+            //If we move a king we need to revoke its castling rights.
+            if (temp[start[0]][start[1]].type == "king") {
+              //check to see if the move the user is making is castling, In this case we also move the rook.
+              if (start[1] + 2 == end[1]) {
+                temp[start[0]][start[1] + 1] = temp[start[0]][start[1] + 3];
+                temp[start[0]][start[1] + 3] = {
+                  type: "n/a",
+                  color: "n/a",
+                  image: <Image />,
+                };
+              }
+              if (start[1] - 2 == end[1]) {
+                temp[start[0]][start[1] - 1] = temp[start[0]][start[1] - 4];
+                temp[start[0]][start[1] - 4] = {
+                  type: "n/a",
+                  color: "n/a",
+                  image: <Image />,
+                };
+              }
+              temp[start[0]][start[1]].castlingRights = false;
+            }
+            //If we are moving a pawn, we need to manage the en passant flag, and check to see if
+            //the move being performed is en passant.
+            if (temp[start[0]][start[1]].type == "pawn") {
+              if (
+                temp[end[0]][end[1]].type == "n/a" &&
+                end[1] == start[1] + 1
+              ) {
+                temp[start[0]][start[1] + 1] = {
+                  type: "n/a",
+                  color: "n/a",
+                  enPassantFlag: false,
+                  image: <Image />,
+                };
+              }
+              if (
+                temp[end[0]][end[1]].type == "n/a" &&
+                end[1] == start[1] - 1
+              ) {
+                temp[start[0]][start[1] - 1] = {
+                  type: "n/a",
+                  color: "n/a",
+                  enPassantFlag: false,
+                  image: <Image />,
+                };
+              }
+              if (end[0] + 2 == start[0] || end[0] - 2 == start[0]) {
+                temp[start[0]][start[1]].enPassantFlag = true;
+              } else if (temp[start[0]][start[1]].enPassantFlag) {
+                temp[start[0]][start[1]].enPassantFlag = false;
+              }
+            }
             temp[end[0]][end[1]] = temp[start[0]][start[1]];
             temp[start[0]][start[1]] = {
               type: "n/a",
@@ -639,7 +695,7 @@ const GameScreen = (props) => {
     var color = board[start[0]][start[1]].color;
     var oppositeColor = getOppositeColor(color);
 
-    if (color == "white" && start[0]+1 < 8) {
+    if (color == "white" && start[0] + 1 < 8) {
       //If the piece is in the starting position it can move one or two spaces.
       if (start[0] == 1) {
         if (board[start[0] + 1][start[1]].type == "n/a") {
@@ -904,6 +960,26 @@ const GameScreen = (props) => {
       }
     }
 
+    //Castling
+    if (
+      board[start[0]][start[1]].castlingRights &&
+      board[start[0]][start[1] - 1].type == "n/a" &&
+      board[start[0]][start[1] - 2].type == "n/a" &&
+      board[start[0]][start[1] - 3].type == "n/a" &&
+      board[start[0]][start[1] - 4].color == color &&
+      board[start[0]][start[1] - 4].type == "rook"
+    ) {
+      possibleMoves.push([start[0], start[1] - 2]);
+    }
+    if (
+      board[start[0]][start[1]].castlingRights &&
+      board[start[0]][start[1] + 1].type == "n/a" &&
+      board[start[0]][start[1] + 2].type == "n/a" &&
+      board[start[0]][start[1] + 3].color == color &&
+      board[start[0]][start[1] + 3].type == "rook"
+    ) {
+      possibleMoves.push([start[0], start[1] + 2]);
+    }
     return possibleMoves;
   };
 
