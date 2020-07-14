@@ -1,10 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  Image,
-} from "react-native";
+import { View, Text, StyleSheet, Image } from "react-native";
 
 import Square from "../components/square";
 
@@ -247,26 +242,102 @@ const GameScreen = (props) => {
   const handleSelect = (key, file, rank) => {
     setSelected(key);
     setMoveArray(moveArray.concat([file, rank]));
-    findPossibleMoves([file, rank]);
+    var possibleMoves = findPossibleMoves([file, rank], pieces);
+    possibleMoves = validatePossibleMoves([file, rank], possibleMoves);
+    setPossibleMoves(possibleMoves);
   };
 
-  const findPossibleMoves = (start) => {
+  //Depending on the piece located at the start position,
+  //this function acts as a wrapper to call the function that
+  //contains the logic that details how each type of piece can move.
+  //An array of moves is that returned to this function. After, the
+  //moves are validated to make sure moving the pieces doesn't put
+  //the players own king in check. Moves that do put the players own king in check
+  //are removed from the array. Once all moves are validated, the possibleMoves array
+  //is set to be displayed on the board.
+  const findPossibleMoves = (start, board) => {
+    var possibleMoves;
     //no possible moves
-    if (pieces[start[0]][start[1]].type == "n/a") {
-      return;
-    } else if (pieces[start[0]][start[1]].type == "pawn") {
-      setPossibleMoves(movePawn(start));
-    } else if (pieces[start[0]][start[1]].type == "rook") {
-      setPossibleMoves(moveRook(start));
-    } else if (pieces[start[0]][start[1]].type == "knight") {
-      setPossibleMoves(moveKnight(start));
-    } else if (pieces[start[0]][start[1]].type == "bishop") {
-      setPossibleMoves(moveBishop(start));
-    } else if (pieces[start[0]][start[1]].type == "king") {
-      setPossibleMoves(moveKing(start));
-    } else if (pieces[start[0]][start[1]].type == "queen") {
-      setPossibleMoves(moveQueen(start));
+    if (board[start[0]][start[1]].type == "n/a") {
+      possibleMoves = [];
+    } else if (board[start[0]][start[1]].type == "pawn") {
+      possibleMoves = movePawn(start, board);
+    } else if (board[start[0]][start[1]].type == "rook") {
+      possibleMoves = moveRook(start, board);
+    } else if (board[start[0]][start[1]].type == "knight") {
+      possibleMoves = moveKnight(start, board);
+    } else if (board[start[0]][start[1]].type == "bishop") {
+      possibleMoves = moveBishop(start, board);
+    } else if (board[start[0]][start[1]].type == "king") {
+      possibleMoves = moveKing(start, board);
+    } else if (board[start[0]][start[1]].type == "queen") {
+      possibleMoves = moveQueen(start, board);
     }
+    return possibleMoves;
+  };
+
+  const validatePossibleMoves = (start, possibleMoves) => {
+    var color = pieces[start[0]][start[1]].color;
+    var kingPosition = findKing(color);
+    //var board = [...pieces];
+    var board = [];
+    //deep copy the pieces array.
+    for (var i = 0; i < 8; ++i) {
+      var row = [];
+      for (var j = 0; j < 8; ++j) {
+        row.push(pieces[i][j]);
+      }
+      board.push(row);
+    }
+
+    //We are removing any move that would put the players own king in check
+    //In chess this situation would be called a "pin". Since we are trying all
+    //of the possible moves we need to know the previous move to set that to an empty
+    //square once we move
+    var newArray = [];
+    var previous = [start[0], start[1]];
+    possibleMoves.forEach(function (move) {
+      //scanforcheck
+      board[move[0]][move[1]] = board[previous[0]][previous[1]];
+      board[previous[0]][previous[1]] = {
+        type: "n/a",
+        color: "n/a",
+        image: <Image />,
+      };
+      previous = [move[0], move[1]];
+      if (!scanForCheck(board, color)) {
+        newArray.push(move);
+      }
+    });
+
+    return newArray;
+  };
+
+  const scanForCheck = (board, color) => {
+    var kingPosition = findKing(color);
+    var possibleMoves = [];
+    for (var i = 0; i < 8; ++i) {
+      for (var j = 0; j < 8; ++j) {
+        possibleMoves = findPossibleMoves([i, j], board);
+        possibleMoves.forEach(function (move) {
+          if (move[0] == kingPosition[0] && move[1] == kingPosition[1]) {
+            return true;
+          }
+        });
+      }
+    }
+    return false;
+  };
+
+  const findKing = (color) => {
+    for (var i = 0; i < 8; ++i) {
+      for (var j = 0; j < 8; ++j) {
+        if (pieces[i][j].type == "king" && pieces[i][j].color == color) {
+          return [i, j];
+        }
+      }
+    }
+    return; //Should never actually get here.
   };
 
   //Move a piece in the pieces array so the board rerenders and
@@ -278,23 +349,34 @@ const GameScreen = (props) => {
 
       //If a player selects a square with no piece on it.
       //Empty the move array.
-
-      if (pieces[start[0]][start[1]].type == "n/a") {
+      if (
+        pieces[start[0]][start[1]].type == "n/a" ||
+        (start[0] == end[0] && start[1] == end[1])
+      ) {
         setMoveArray([]);
+        setPossibleMoves([]);
+        setSelected();
         return;
       }
 
-      var temp = pieces;
+      var temp = pieces; //This actually mutates the pieces array since it is the same reference in memory.
+      var possibleMoves = findPossibleMoves([start[0], start[1]], pieces);
 
-      temp[end[0]][end[1]] = temp[start[0]][start[1]];
-      temp[start[0]][start[1]] = {
-        type: "n/a",
-        color: "n/a",
-        image: <Image />,
-      };
+      if (temp[end[0]][end[1]].color != temp[start[0]][start[1]].color) {
+        possibleMoves.forEach(function (m) {
+          if (end[0] == m[0] && end[1] == m[1]) {
+            temp[end[0]][end[1]] = temp[start[0]][start[1]];
+            temp[start[0]][start[1]] = {
+              type: "n/a",
+              color: "n/a",
+              image: <Image />,
+            };
+          }
+        });
+      }
+
       setMoveArray([]);
       setPossibleMoves([]);
-      setPieces(temp);
     }
   };
 
@@ -407,15 +489,15 @@ const GameScreen = (props) => {
 
   //Helper function for finding the possible moves of rooks, bishops,
   //and queens, since they all move in a similar fashion.
-  const validMoveChecker = (i, j, color, flag) => {
+  const validMoveChecker = (i, j, color, flag, board) => {
     var possibleMove = [];
     var oppositeColor = getOppositeColor(color);
     //Friendly piece blocking
-    if (pieces[i][j].color == color) {
+    if (board[i][j].color == color) {
       flag = false;
     }
     //Hostile piece blocking
-    if (pieces[i][j].color == oppositeColor && flag) {
+    if (board[i][j].color == oppositeColor && flag) {
       possibleMove = [i, j];
       flag = false;
     }
@@ -427,9 +509,9 @@ const GameScreen = (props) => {
   };
 
   //Scan the board for all possible moves the selected rook can make.
-  const moveBishop = (start) => {
+  const moveBishop = (start, board) => {
     var possibleMoves = [];
-    var color = pieces[start[0]][start[1]].color;
+    var color = board[start[0]][start[1]].color;
     var result; //Result of ValidMoveChecker, which returns an object with the fields possibleMove, and flag
     var flag = true; //Flag is set to false once there is a piece that is blocking movement in the current direction of the scan.
 
@@ -437,8 +519,8 @@ const GameScreen = (props) => {
     var j = start[1] + 1; //+1 and later -1 will be to exclude the pieces current position as a possible move.
     for (var i = start[0] + 1; i < 8; ++i) {
       if (j < 8) {
-        result = validMoveChecker(i, j, color, flag);
-        if (result.possibleMove) {
+        result = validMoveChecker(i, j, color, flag, board);
+        if (result.possibleMove.length > 0) {
           possibleMoves.push(result.possibleMove);
         }
         flag = result.flag;
@@ -451,8 +533,8 @@ const GameScreen = (props) => {
     j = start[1] - 1;
     for (var i = start[0] - 1; i >= 0; --i) {
       if (j >= 0) {
-        result = validMoveChecker(i, j, color, flag);
-        if (result.possibleMove) {
+        result = validMoveChecker(i, j, color, flag, board);
+        if (result.possibleMove.length > 0) {
           possibleMoves.push(result.possibleMove);
         }
         flag = result.flag;
@@ -465,8 +547,8 @@ const GameScreen = (props) => {
     j = start[1] - 1;
     for (var i = start[0] + 1; i < 8; ++i) {
       if (j >= 0) {
-        result = validMoveChecker(i, j, color, flag);
-        if (result.possibleMove) {
+        result = validMoveChecker(i, j, color, flag, board);
+        if (result.possibleMove.length > 0) {
           possibleMoves.push(result.possibleMove);
         }
         flag = result.flag;
@@ -479,8 +561,8 @@ const GameScreen = (props) => {
     j = start[1] + 1;
     for (var i = start[0] - 1; i >= 0; --i) {
       if (j < 8) {
-        result = validMoveChecker(i, j, color, flag);
-        if (result.possibleMove) {
+        result = validMoveChecker(i, j, color, flag, board);
+        if (result.possibleMove.length > 0) {
           possibleMoves.push(result.possibleMove);
         }
         flag = result.flag;
@@ -488,23 +570,22 @@ const GameScreen = (props) => {
       }
     }
     flag = true;
-
     return possibleMoves;
   };
 
   //Scan the board for all possible moves the selected rook can make.
   //See moveBishop(start) for more information, the functions are very similar
   //and moveBishop has additional documentation.
-  const moveRook = (start) => {
+  const moveRook = (start, board) => {
     var possibleMoves = [];
-    var color = pieces[start[0]][start[1]].color;
+    var color = board[start[0]][start[1]].color;
     var flag = true;
     var result;
 
     //move forward
     for (var i = start[0] + 1; i < 8; ++i) {
-      result = validMoveChecker(i, start[1], color, flag);
-      if (result.possibleMove) {
+      result = validMoveChecker(i, start[1], color, flag, board);
+      if (result.possibleMove.length > 0) {
         possibleMoves.push(result.possibleMove);
       }
       flag = result.flag;
@@ -513,8 +594,8 @@ const GameScreen = (props) => {
 
     //move down
     for (var i = start[0] - 1; i >= 0; --i) {
-      result = validMoveChecker(i, start[1], color, flag);
-      if (result.possibleMove) {
+      result = validMoveChecker(i, start[1], color, flag, board);
+      if (result.possibleMove.length > 0) {
         possibleMoves.push(result.possibleMove);
       }
       flag = result.flag;
@@ -523,8 +604,8 @@ const GameScreen = (props) => {
 
     //move right
     for (var j = start[1] + 1; j < 8; ++j) {
-      result = validMoveChecker(start[0], j, color, flag);
-      if (result.possibleMove) {
+      result = validMoveChecker(start[0], j, color, flag, board);
+      if (result.possibleMove.length > 0) {
         possibleMoves.push(result.possibleMove);
       }
       flag = result.flag;
@@ -533,49 +614,47 @@ const GameScreen = (props) => {
 
     //move left
     for (var j = start[1] - 1; j >= 0; --j) {
-      result = validMoveChecker(start[0], j, color, flag);
-      if (result.possibleMove) {
+      result = validMoveChecker(start[0], j, color, flag, board);
+      if (result.possibleMove.length > 0) {
         possibleMoves.push(result.possibleMove);
       }
       flag = result.flag;
     }
     flag = true;
-
     return possibleMoves;
   };
 
   //queen is just the combination of a rook and bishop so I just call their
   //possible move finding methods and combine the results.
-  const moveQueen = (start) => {
-    var rookMoves = moveRook(start);
-    var bishopMoves = moveBishop(start);
+  const moveQueen = (start, board) => {
+    var rookMoves = moveRook(start, board);
+    var bishopMoves = moveBishop(start, board);
     var queenMoves = rookMoves.concat(bishopMoves);
-
     return queenMoves;
   };
 
   //Movement for pawn
-  const movePawn = (start) => {
+  const movePawn = (start, board) => {
     var possibleMoves = [];
-    var color = pieces[start[0]][start[1]].color;
+    var color = board[start[0]][start[1]].color;
     var oppositeColor = getOppositeColor(color);
 
-    if (color == "white") {
+    if (color == "white" && start[0]+1 < 8) {
       //If the piece is in the starting position it can move one or two spaces.
       if (start[0] == 1) {
-        if (pieces[start[0] + 1][start[1]].type == "n/a") {
+        if (board[start[0] + 1][start[1]].type == "n/a") {
           possibleMoves.push([start[0] + 1, start[1]]);
         }
         if (
-          pieces[start[0] + 1][start[1]].type == "n/a" &&
-          pieces[start[0] + 2][start[1]].type == "n/a"
+          board[start[0] + 1][start[1]].type == "n/a" &&
+          board[start[0] + 2][start[1]].type == "n/a"
         ) {
           possibleMoves.push([start[0] + 2, start[1]]);
         }
       }
       //default movement
       else {
-        if (pieces[start[0] + 1][start[1]].type == "n/a") {
+        if (board[start[0] + 1][start[1]].type == "n/a") {
           possibleMoves.push([start[0] + 1, start[1]]);
         }
       }
@@ -583,15 +662,15 @@ const GameScreen = (props) => {
       //bound checking so we dont access spaces that are below zero or above 8.
       if (start[1] + 1 < 8) {
         //attacking
-        if (pieces[start[0] + 1][start[1] + 1].color == oppositeColor) {
+        if (board[start[0] + 1][start[1] + 1].color == oppositeColor) {
           possibleMoves.push([start[0] + 1, start[1] + 1]);
         }
         //en passant
         if (start[0] == 4) {
           if (
-            pieces[start[0]][start[1] + 1].color == oppositeColor &&
-            pieces[start[0]][start[1] + 1].type == "pawn" &&
-            pieces[start[0]][start[1] + 1].enPassantFlag
+            board[start[0]][start[1] + 1].color == oppositeColor &&
+            board[start[0]][start[1] + 1].type == "pawn" &&
+            board[start[0]][start[1] + 1].enPassantFlag
           ) {
             possibleMoves.push([start[0] + 1, start[1] + 1]);
           }
@@ -601,15 +680,15 @@ const GameScreen = (props) => {
       //Bound checking.
       if (start[1] - 1 >= 0) {
         //attacking
-        if (pieces[start[0] + 1][start[1] - 1].color == oppositeColor) {
+        if (board[start[0] + 1][start[1] - 1].color == oppositeColor) {
           possibleMoves.push([start[0] + 1, start[1] - 1]);
         }
         //en passant
         if (start[0] == 4) {
           if (
-            pieces[start[0]][start[1] - 1].color == oppositeColor &&
-            pieces[start[0]][start[1] - 1].type == "pawn" &&
-            pieces[start[0]][start[1] - 1].enPassantFlag
+            board[start[0]][start[1] - 1].color == oppositeColor &&
+            board[start[0]][start[1] - 1].type == "pawn" &&
+            board[start[0]][start[1] - 1].enPassantFlag
           ) {
             possibleMoves.push([start[0] + 1, start[1] - 1]);
           }
@@ -617,19 +696,22 @@ const GameScreen = (props) => {
       }
     }
 
-    if (color == "black") {
+    if (color == "black" && start[0] - 1 >= 0) {
       //If the piece is in the starting position it can move one or two spaces.
       if (start[0] == 6) {
-        if (pieces[start[0] - 1][start[1]].type == "n/a") {
+        if (board[start[0] - 1][start[1]].type == "n/a") {
           possibleMoves.push([start[0] - 1, start[1]]);
         }
-        if (pieces[start[0] - 2][start[1]].type == "n/a") {
+        if (
+          board[start[0] - 1][start[1]].type == "n/a" &&
+          board[start[0] - 2][start[1]].type == "n/a"
+        ) {
           possibleMoves.push([start[0] - 2, start[1]]);
         }
       }
       //default movement
       else {
-        if (pieces[start[0] - 1][start[1]].type == "n/a") {
+        if (board[start[0] - 1][start[1]].type == "n/a") {
           possibleMoves.push([start[0] - 1, start[1]]);
         }
       }
@@ -637,15 +719,15 @@ const GameScreen = (props) => {
       //bound checking so we dont access spaces that are below zero or above 8.
       if (start[1] + 1 < 8) {
         //attacking
-        if (pieces[start[0] - 1][start[1] + 1].color == oppositeColor) {
+        if (board[start[0] - 1][start[1] + 1].color == oppositeColor) {
           possibleMoves.push([start[0] - 1, start[1] + 1]);
         }
         //en passant
         if (start[0] == 3) {
           if (
-            pieces[start[0]][start[1] + 1].color == oppositeColor &&
-            pieces[start[0]][start[1] + 1].type == "pawn" &&
-            pieces[start[0]][start[1] + 1].enPassantFlag
+            board[start[0]][start[1] + 1].color == oppositeColor &&
+            board[start[0]][start[1] + 1].type == "pawn" &&
+            board[start[0]][start[1] + 1].enPassantFlag
           ) {
             possibleMoves.push([start[0] - 1, start[1] + 1]);
           }
@@ -655,15 +737,15 @@ const GameScreen = (props) => {
       //Bound checking.
       if (start[1] - 1 >= 0) {
         //attacking
-        if (pieces[start[0] - 1][start[1] - 1].color == oppositeColor) {
+        if (board[start[0] - 1][start[1] - 1].color == oppositeColor) {
           possibleMoves.push([start[0] - 1, start[1] - 1]);
         }
         //en passant
         if (start[0] == 3) {
           if (
-            pieces[start[0]][start[1] - 1].color == oppositeColor &&
-            pieces[start[0]][start[1] - 1].type == "pawn" &&
-            pieces[start[0]][start[1] - 1].enPassantFlag
+            board[start[0]][start[1] - 1].color == oppositeColor &&
+            board[start[0]][start[1] - 1].type == "pawn" &&
+            board[start[0]][start[1] - 1].enPassantFlag
           ) {
             possibleMoves.push([start[0] - 1, start[1] - 1]);
           }
@@ -675,22 +757,22 @@ const GameScreen = (props) => {
   };
 
   //knight movement
-  const moveKnight = (start) => {
+  const moveKnight = (start, board) => {
     var possibleMoves = [];
-    var color = pieces[start[0]][start[1]].color;
+    var color = board[start[0]][start[1]].color;
     var oppositeColor = getOppositeColor(color);
 
     //i+2, j-1 && j+1
     if (start[0] + 2 < 8 && start[1] + 1 < 8 && start[1] - 1 >= 0) {
       if (
-        pieces[start[0] + 2][start[1] + 1].type == "n/a" ||
-        pieces[start[0] + 2][start[1] + 1].color == oppositeColor
+        board[start[0] + 2][start[1] + 1].type == "n/a" ||
+        board[start[0] + 2][start[1] + 1].color == oppositeColor
       ) {
         possibleMoves.push([start[0] + 2, start[1] + 1]);
       }
       if (
-        pieces[start[0] + 2][start[1] - 1].type == "n/a" ||
-        pieces[start[0] + 2][start[1] - 1].color == oppositeColor
+        board[start[0] + 2][start[1] - 1].type == "n/a" ||
+        board[start[0] + 2][start[1] - 1].color == oppositeColor
       ) {
         possibleMoves.push([start[0] + 2, start[1] - 1]);
       }
@@ -699,14 +781,14 @@ const GameScreen = (props) => {
     //i+1 && i-1, j+2
     if (start[0] + 1 < 8 && start[0] - 1 >= 0 && start[1] + 2 < 8) {
       if (
-        pieces[start[0] + 1][start[1] + 2].type == "n/a" ||
-        pieces[start[0] + 1][start[1] + 2].color == oppositeColor
+        board[start[0] + 1][start[1] + 2].type == "n/a" ||
+        board[start[0] + 1][start[1] + 2].color == oppositeColor
       ) {
         possibleMoves.push([start[0] + 1, start[1] + 2]);
       }
       if (
-        pieces[start[0] - 1][start[1] - 1].type == "n/a" ||
-        pieces[start[0] - 1][start[1] - 1].color == oppositeColor
+        board[start[0] - 1][start[1] + 2].type == "n/a" ||
+        board[start[0] - 1][start[1] + 2].color == oppositeColor
       ) {
         possibleMoves.push([start[0] - 1, start[1] + 2]);
       }
@@ -714,14 +796,14 @@ const GameScreen = (props) => {
     //i+1 && i-1, j-2
     if (start[0] + 1 < 8 && start[0] - 1 >= 0 && start[1] - 2 >= 0) {
       if (
-        pieces[start[0] + 1][start[1] - 2].type == "n/a" ||
-        pieces[start[0] + 1][start[1] - 2].color == oppositeColor
+        board[start[0] + 1][start[1] - 2].type == "n/a" ||
+        board[start[0] + 1][start[1] - 2].color == oppositeColor
       ) {
         possibleMoves.push([start[0] + 1, start[1] - 2]);
       }
       if (
-        pieces[start[0] - 1][start[1] - 2].type == "n/a" ||
-        pieces[start[0] - 1][start[1] - 2].color == oppositeColor
+        board[start[0] - 1][start[1] - 2].type == "n/a" ||
+        board[start[0] - 1][start[1] - 2].color == oppositeColor
       ) {
         possibleMoves.push([start[0] - 1, start[1] - 2]);
       }
@@ -729,14 +811,14 @@ const GameScreen = (props) => {
     //i-2, j-1 && j+1
     if (start[0] - 2 >= 0 && start[1] + 1 < 8 && start[1] - 1 >= 0) {
       if (
-        pieces[start[0] - 2][start[1] + 1].type == "n/a" ||
-        pieces[start[0] - 2][start[1] + 1].color == oppositeColor
+        board[start[0] - 2][start[1] + 1].type == "n/a" ||
+        board[start[0] - 2][start[1] + 1].color == oppositeColor
       ) {
         possibleMoves.push([start[0] - 2, start[1] + 1]);
       }
       if (
-        pieces[start[0] - 2][start[1] - 1].type == "n/a" ||
-        pieces[start[0] - 2][start[1] - 1].color == oppositeColor
+        board[start[0] - 2][start[1] - 1].type == "n/a" ||
+        board[start[0] - 2][start[1] - 1].color == oppositeColor
       ) {
         possibleMoves.push([start[0] - 2, start[1] - 1]);
       }
@@ -745,15 +827,15 @@ const GameScreen = (props) => {
   };
 
   //king movement STILL NEEDS CASTLING SUPPORT
-  const moveKing = (start) => {
+  const moveKing = (start, board) => {
     var possibleMoves = [];
-    var color = pieces[start[0]][start[1]].color;
+    var color = board[start[0]][start[1]].color;
     var oppositeColor = getOppositeColor(color);
 
     if (start[0] + 1 < 8) {
       if (
-        pieces[start[0] + 1][start[1]].color == oppositeColor ||
-        pieces[start[0] + 1][start[1]].type == "n/a"
+        board[start[0] + 1][start[1]].color == oppositeColor ||
+        board[start[0] + 1][start[1]].type == "n/a"
       ) {
         possibleMoves.push([start[0] + 1, start[1]]);
       }
@@ -761,8 +843,8 @@ const GameScreen = (props) => {
 
     if (start[0] - 1 >= 0) {
       if (
-        pieces[start[0] - 1][start[1]].color == oppositeColor ||
-        pieces[start[0] - 1][start[1]].type == "n/a"
+        board[start[0] - 1][start[1]].color == oppositeColor ||
+        board[start[0] - 1][start[1]].type == "n/a"
       ) {
         possibleMoves.push([start[0] - 1, start[1]]);
       }
@@ -770,8 +852,8 @@ const GameScreen = (props) => {
 
     if (start[1] - 1 >= 0) {
       if (
-        pieces[start[0]][start[1] - 1].color == oppositeColor ||
-        pieces[start[0]][start[1] - 1].type == "n/a"
+        board[start[0]][start[1] - 1].color == oppositeColor ||
+        board[start[0]][start[1] - 1].type == "n/a"
       ) {
         possibleMoves.push([start[0], start[1] - 1]);
       }
@@ -779,8 +861,8 @@ const GameScreen = (props) => {
 
     if (start[1] + 1 < 8) {
       if (
-        pieces[start[0]][start[1] + 1].color == oppositeColor ||
-        pieces[start[0]][start[1] + 1].type == "n/a"
+        board[start[0]][start[1] + 1].color == oppositeColor ||
+        board[start[0]][start[1] + 1].type == "n/a"
       ) {
         possibleMoves.push([start[0], start[1] + 1]);
       }
@@ -788,8 +870,8 @@ const GameScreen = (props) => {
 
     if (start[0] + 1 < 8 && start[1] + 1 < 8) {
       if (
-        pieces[start[0] + 1][start[1] + 1].color == oppositeColor ||
-        pieces[start[0] + 1][start[1] + 1].type == "n/a"
+        board[start[0] + 1][start[1] + 1].color == oppositeColor ||
+        board[start[0] + 1][start[1] + 1].type == "n/a"
       ) {
         possibleMoves.push([start[0] + 1, start[1] + 1]);
       }
@@ -797,8 +879,8 @@ const GameScreen = (props) => {
 
     if (start[0] - 1 >= 0 && start[1] - 1 >= 0) {
       if (
-        pieces[start[0] - 1][start[1] - 1].color == oppositeColor ||
-        pieces[start[0] - 1][start[1] - 1].type == "n/a"
+        board[start[0] - 1][start[1] - 1].color == oppositeColor ||
+        board[start[0] - 1][start[1] - 1].type == "n/a"
       ) {
         possibleMoves.push([start[0] - 1, start[1] - 1]);
       }
@@ -806,8 +888,8 @@ const GameScreen = (props) => {
 
     if (start[0] + 1 < 8 && start[1] - 1 >= 0) {
       if (
-        pieces[start[0] + 1][start[1] - 1].color == oppositeColor ||
-        pieces[start[0] + 1][start[1] - 1].type == "n/a"
+        board[start[0] + 1][start[1] - 1].color == oppositeColor ||
+        board[start[0] + 1][start[1] - 1].type == "n/a"
       ) {
         possibleMoves.push([start[0] + 1, start[1] - 1]);
       }
@@ -815,8 +897,8 @@ const GameScreen = (props) => {
 
     if (start[0] - 1 >= 0 && start[1] + 1 < 8) {
       if (
-        pieces[start[0] - 1][start[1] + 1].color == oppositeColor ||
-        pieces[start[0] - 1][start[1] + 1].type == "n/a"
+        board[start[0] - 1][start[1] + 1].color == oppositeColor ||
+        board[start[0] - 1][start[1] + 1].type == "n/a"
       ) {
         possibleMoves.push([start[0] - 1, start[1] + 1]);
       }
