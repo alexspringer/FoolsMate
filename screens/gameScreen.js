@@ -245,8 +245,7 @@ const GameScreen = (props) => {
     setSelected(key);
     setMoveArray(moveArray.concat([file, rank]));
     var possibleMoves = findPossibleMoves([file, rank], pieces);
-    possibleMoves = validatePossibleMoves([file, rank], possibleMoves);
-    setPossibleMoves(possibleMoves);
+    setPossibleMoves(validatePossibleMoves([file, rank], possibleMoves));
   };
 
   //Depending on the piece located at the start position,
@@ -296,18 +295,29 @@ const GameScreen = (props) => {
     //of the possible moves we need to know the previous move to set that to an empty
     //square once we move
     var newArray = [];
-    var previous = [start[0], start[1]];
     possibleMoves.forEach(function (move) {
+      var prevType = "n/a";
+      var prevColor = "n/a";
+      if(board[move[0]][move[1]].type != "n/a"){
+        prevType = board[move[0]][move[1]].type;
+        prevColor = board[move[0]][move[1]].color;
+      }
       //scanforcheck
-      board[move[0]][move[1]] = board[previous[0]][previous[1]];
-      board[previous[0]][previous[1]] = {
+      board[move[0]][move[1]] = board[start[0]][start[1]];
+      board[start[0]][start[1]] = {
         type: "n/a",
         color: "n/a",
         image: <Image />,
       };
-      previous = [move[0], move[1]];
+
       if (!scanForCheck(board, color)) {
         newArray.push(move);
+      }
+      board[start[0]][start[1]] = board[move[0]][move[1]];
+      board[move[0]][move[1]] = {
+        type: prevType,
+        color: prevColor,
+        image: <Image />,
       }
     });
 
@@ -319,17 +329,18 @@ const GameScreen = (props) => {
   const scanForCheck = (board, color) => {
     var kingPosition = findKing(color);
     var possibleMoves = [];
+    var flag = false;
     for (var i = 0; i < 8; ++i) {
       for (var j = 0; j < 8; ++j) {
         possibleMoves = findPossibleMoves([i, j], board);
         possibleMoves.forEach(function (move) {
           if (move[0] == kingPosition[0] && move[1] == kingPosition[1]) {
-            return true;
+            flag = true;;
           }
-        });
+        })
       }
     }
-    return false;
+    return flag;
   };
 
   //Given a color, scan the board for that king and return its position
