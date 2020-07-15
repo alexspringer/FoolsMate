@@ -279,7 +279,6 @@ const GameScreen = (props) => {
 
   const validatePossibleMoves = (start, possibleMoves) => {
     var color = pieces[start[0]][start[1]].color;
-    var kingPosition = findKing(color);
     var board = [];
     //deep copy the pieces array.
     for (var i = 0; i < 8; ++i) {
@@ -290,19 +289,19 @@ const GameScreen = (props) => {
       board.push(row);
     }
 
+    if (board[start[0]][start[1]].type == "king") {
+    }
+
     //We are removing any move that would put the players own king in check
     //In chess this situation would be called a "pin". Since we are trying all
     //of the possible moves we need to know the previous move to set that to an empty
     //square once we move
     var newArray = [];
     possibleMoves.forEach(function (move) {
-      var prevType = "n/a";
-      var prevColor = "n/a";
-      if(board[move[0]][move[1]].type != "n/a"){
-        prevType = board[move[0]][move[1]].type;
-        prevColor = board[move[0]][move[1]].color;
-      }
-      //scanforcheck
+      var prevType = board[move[0]][move[1]].type;
+      var prevColor = board[move[0]][move[1]].color;
+
+      ///Test out the move and then scan the board for check.
       board[move[0]][move[1]] = board[start[0]][start[1]];
       board[start[0]][start[1]] = {
         type: "n/a",
@@ -310,15 +309,18 @@ const GameScreen = (props) => {
         image: <Image />,
       };
 
+      //If the move can be done without putting the unit in check add to the list of moves.
       if (!scanForCheck(board, color)) {
         newArray.push(move);
       }
+
+      //Reset the board to before we tested out the move.
       board[start[0]][start[1]] = board[move[0]][move[1]];
       board[move[0]][move[1]] = {
         type: prevType,
         color: prevColor,
         image: <Image />,
-      }
+      };
     });
 
     return newArray;
@@ -327,27 +329,30 @@ const GameScreen = (props) => {
   //Given a color, and a board state, scan the board to see
   //if that king is in check from another piece.
   const scanForCheck = (board, color) => {
-    var kingPosition = findKing(color);
+    var kingPosition = findKing(board, color);
     var possibleMoves = [];
+    var oppositeColor = getOppositeColor(color);
     var flag = false;
     for (var i = 0; i < 8; ++i) {
       for (var j = 0; j < 8; ++j) {
-        possibleMoves = findPossibleMoves([i, j], board);
-        possibleMoves.forEach(function (move) {
-          if (move[0] == kingPosition[0] && move[1] == kingPosition[1]) {
-            flag = true;;
-          }
-        })
+        if (board[i][j].color == oppositeColor) {
+          possibleMoves = findPossibleMoves([i, j], board);
+          possibleMoves.forEach(function (move) {
+            if (move[0] == kingPosition[0] && move[1] == kingPosition[1]) {
+              flag = true;
+            }
+          });
+        }
       }
     }
     return flag;
   };
 
   //Given a color, scan the board for that king and return its position
-  const findKing = (color) => {
+  const findKing = (board, color) => {
     for (var i = 0; i < 8; ++i) {
       for (var j = 0; j < 8; ++j) {
-        if (pieces[i][j].type == "king" && pieces[i][j].color == color) {
+        if (board[i][j].type == "king" && board[i][j].color == color) {
           return [i, j];
         }
       }
