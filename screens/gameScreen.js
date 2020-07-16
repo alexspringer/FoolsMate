@@ -1,5 +1,12 @@
 import React, { useState, useRef, useEffect } from "react";
-import { View, Text, StyleSheet, Image } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  Image,
+  Modal,
+  TouchableHighlight,
+} from "react-native";
 
 import Square from "../components/square";
 
@@ -240,6 +247,17 @@ const GameScreen = (props) => {
 
   const [moveArray, setMoveArray] = useState([]);
   const [possibleMoves, setPossibleMoves] = useState([]);
+  //True for whites turn, false for blacks turn.
+  const [playerTurn, setPlayerTurn] = useState(true);
+  const [checkmate, setCheckmate] = useState(false);
+
+  const displayPlayer = () => {
+    if (playerTurn) {
+      return "White";
+    } else {
+      return "Black";
+    }
+  };
 
   const handleSelect = (key, file, rank) => {
     setSelected(key);
@@ -277,8 +295,40 @@ const GameScreen = (props) => {
     return possibleMoves;
   };
 
+  const isCastlingSafe = (board, color) => {
+    var kingPosition = findKing(board, color);
+    var possibleMoves = [];
+    var oppositeColor = getOppositeColor(color);
+    var flag = true;
+    for (var i = 0; i < 8; ++i) {
+      for (var j = 0; j < 8; ++j) {
+        if (board[i][j].color == oppositeColor) {
+          possibleMoves = findPossibleMoves([i, j], board);
+          possibleMoves.forEach(function (move) {
+            if (
+              (move[0] == kingPosition[0] && move[1] == kingPosition[1]) ||
+              (move[0] == kingPosition[0] && move[1] == kingPosition[1] + 1) ||
+              (move[0] == kingPosition[0] && move[1] == kingPosition[1] + 2)
+            ) {
+              flag = false;
+            }
+            if (
+              (move[0] == kingPosition[0] && move[1] == kingPosition[1]) ||
+              (move[0] == kingPosition[0] && move[1] == kingPosition[1] - 1) ||
+              (move[0] == kingPosition[0] && move[1] == kingPosition[1] - 2)
+            ) {
+              flag = false;
+            }
+          });
+        }
+      }
+    }
+    return flag;
+  };
+
   const validatePossibleMoves = (start, possibleMoves) => {
     var color = pieces[start[0]][start[1]].color;
+    var oppositeColor = getOppositeColor(color);
     var board = [];
     //deep copy the pieces array.
     for (var i = 0; i < 8; ++i) {
@@ -289,17 +339,45 @@ const GameScreen = (props) => {
       board.push(row);
     }
 
-    if (board[start[0]][start[1]].type == "king") {
-    }
-
     //We are removing any move that would put the players own king in check
     //In chess this situation would be called a "pin". Since we are trying all
     //of the possible moves we need to know the previous move to set that to an empty
     //square once we move
     var newArray = [];
+    var castlingFlag = true;
     possibleMoves.forEach(function (move) {
       var prevType = board[move[0]][move[1]].type;
       var prevColor = board[move[0]][move[1]].color;
+
+      //CREATE A FUNCTION FOR THIS
+      if (board[start[0]][start[1]].type == "pawn") {
+        if (board[move[0]][move[1]].type == "n/a" && move[1] == start[1] + 1) {
+          board[start[0]][start[1] + 1] = {
+            type: "n/a",
+            color: "n/a",
+            enPassantFlag: false,
+            image: <Image />,
+          };
+        }
+        if (board[move[0]][move[1]].type == "n/a" && move[1] == start[1] - 1) {
+          board[start[0]][start[1] - 1] = {
+            type: "n/a",
+            color: "n/a",
+            enPassantFlag: false,
+            image: <Image />,
+          };
+        }
+      }
+
+      if (board[start[0]][start[1]].type == "king") {
+        //castle king side
+        if (move[1] == start[1] + 2 || move[1] == start[1] - 2) {
+          //move rook
+          if (!isCastlingSafe(board, color)) {
+            castlingFlag = false;
+          }
+        }
+      }
 
       ///Test out the move and then scan the board for check.
       board[move[0]][move[1]] = board[start[0]][start[1]];
@@ -310,7 +388,7 @@ const GameScreen = (props) => {
       };
 
       //If the move can be done without putting the unit in check add to the list of moves.
-      if (!scanForCheck(board, color)) {
+      if (!scanForCheck(board, color) && castlingFlag) {
         newArray.push(move);
       }
 
@@ -321,6 +399,27 @@ const GameScreen = (props) => {
         color: prevColor,
         image: <Image />,
       };
+
+      //CREATE A FUNCTION FOR THIS.
+      if (board[start[0]][start[1]].type == "pawn") {
+        if (board[move[0]][move[1]].type == "n/a" && move[1] == start[1] + 1) {
+          board[start[0]][start[1] + 1] = {
+            type: "pawn",
+            color: oppositeColor,
+            enPassantFlag: true,
+            image: <Image />,
+          };
+        }
+        if (board[move[0]][move[1]].type == "n/a" && move[1] == start[1] - 1) {
+          board[start[0]][start[1] - 1] = {
+            type: "pawn",
+            color: oppositeColor,
+            enPassantFlag: true,
+            image: <Image />,
+          };
+        }
+      }
+      castlingFlag = true;
     });
 
     return newArray;
@@ -348,6 +447,21 @@ const GameScreen = (props) => {
     return flag;
   };
 
+  const scanForMate = (board, color) => {
+    for (var i = 0; i < 8; ++i) {
+      for (var j = 0; j < 8; ++j) {
+        if (board[i][j].color == color) {
+          var temp = findPossibleMoves([i, j], board);
+          temp = validatePossibleMoves([i, j], temp);
+          if (temp.length > 0) {
+            return false;
+          }
+        }
+      }
+    }
+    return true;
+  };
+
   //Given a color, scan the board for that king and return its position
   const findKing = (board, color) => {
     for (var i = 0; i < 8; ++i) {
@@ -363,28 +477,32 @@ const GameScreen = (props) => {
   //Move a piece in the pieces array so the board rerenders and
   //displays the players move. WIP
   const movePiece = () => {
+    //Can only move a piece if we have two coordinates (which a coordinate consists of two numbers so 2x2=4)
     if (moveArray.length >= 4) {
-      var start = [moveArray[0], moveArray[1]];
-      var end = [moveArray[2], moveArray[3]];
+      var start = [moveArray[0], moveArray[1]]; //Piece we are moving.
+      var end = [moveArray[2], moveArray[3]]; //Square we are moving the piece to
+      var color = pieces[start[0]][start[1]].color;
+      var oppositeColor = getOppositeColor(color);
+      var temp = pieces; //This actually mutates the pieces array since it is the same reference in memory.
+      var possibleMoves = findPossibleMoves(start, pieces); //Find the possible moves the piece we are moving can make.
+      possibleMoves = validatePossibleMoves(start, possibleMoves); //Updated possible moves that won't put our own king in check.
+      var flag = false; //If a piece is moved, flag is set to true, and that is how we know the player actually made their move.
 
-      //If a player selects a square with no piece on it.
-      //Empty the move array.
-      if (
-        pieces[start[0]][start[1]].type == "n/a" ||
-        (start[0] == end[0] && start[1] == end[1])
-      ) {
+      //Make sure players don't move their opponents piece.
+      if(playerTurn && temp[start[0]][start[1]].color == "black" || !playerTurn && temp[start[0]][start[1]].color == "white"){
         setMoveArray([]);
         setPossibleMoves([]);
         setSelected();
         return;
       }
 
-      var temp = pieces; //This actually mutates the pieces array since it is the same reference in memory.
-      var possibleMoves = findPossibleMoves([start[0], start[1]], pieces);
-
+      //Make sure that a piece is not being moved to a square where a friendly piece is on.
       if (temp[end[0]][end[1]].color != temp[start[0]][start[1]].color) {
         possibleMoves.forEach(function (m) {
           if (end[0] == m[0] && end[1] == m[1]) {
+            //User picked a valid move for the piece to make.
+            flag = true; //Piece is going to move so the players turn ends after this.
+
             //If we move a king we need to revoke its castling rights.
             if (temp[start[0]][start[1]].type == "king") {
               //check to see if the move the user is making is castling, In this case we also move the rook.
@@ -406,6 +524,7 @@ const GameScreen = (props) => {
               }
               temp[start[0]][start[1]].castlingRights = false;
             }
+
             //If we are moving a pawn, we need to manage the en passant flag, and check to see if
             //the move being performed is en passant.
             if (temp[start[0]][start[1]].type == "pawn") {
@@ -437,18 +556,69 @@ const GameScreen = (props) => {
                 temp[start[0]][start[1]].enPassantFlag = false;
               }
             }
+
+            //Move the piece, set the old space to be empty.
             temp[end[0]][end[1]] = temp[start[0]][start[1]];
             temp[start[0]][start[1]] = {
               type: "n/a",
               color: "n/a",
               image: <Image />,
             };
+
+            //Logic for controlling whether a pawn promotes.
+            pawnPromotion(temp, end);
           }
         });
       }
 
-      setMoveArray([]);
-      setPossibleMoves([]);
+      //Piece moved
+      if (flag) {
+        setMoveArray([]);
+        setPossibleMoves([]);
+        if (scanForMate(temp, oppositeColor)) {
+          setCheckmate(true);
+        } else {
+          setPlayerTurn(!playerTurn);
+        }
+      }
+
+      //Piece didn't move.
+      else {
+        setMoveArray([]);
+        setPossibleMoves([]);
+        setSelected();
+      }
+    }
+  };
+
+  //If a pawn reaches to the final rank of the board, promote it to a queen.
+  const pawnPromotion = (temp, end) => {
+    //pawn promotion
+    if (temp[end[0]][end[1]].type == "pawn") {
+      if (end[0] == 0) {
+        temp[end[0]][end[1]] = {
+          type: "queen",
+          color: "black",
+          image: (
+            <Image
+              style={styles.piece}
+              source={require("../assets/BlackQueen.png")}
+            ></Image>
+          ),
+        };
+      }
+      if (end[0] == 7) {
+        temp[end[0]][end[1]] = {
+          type: "queen",
+          color: "white",
+          image: (
+            <Image
+              style={styles.piece}
+              source={require("../assets/WhiteQueen.png")}
+            ></Image>
+          ),
+        };
+      }
     }
   };
 
@@ -835,62 +1005,70 @@ const GameScreen = (props) => {
     var oppositeColor = getOppositeColor(color);
 
     //i+2, j-1 && j+1
-    if (start[0] + 2 < 8 && start[1] + 1 < 8 && start[1] - 1 >= 0) {
+    if (start[0] + 2 < 8) {
       if (
-        board[start[0] + 2][start[1] + 1].type == "n/a" ||
-        board[start[0] + 2][start[1] + 1].color == oppositeColor
+        start[1] + 1 < 8 &&
+        (board[start[0] + 2][start[1] + 1].type == "n/a" ||
+          board[start[0] + 2][start[1] + 1].color == oppositeColor)
       ) {
         possibleMoves.push([start[0] + 2, start[1] + 1]);
       }
       if (
-        board[start[0] + 2][start[1] - 1].type == "n/a" ||
-        board[start[0] + 2][start[1] - 1].color == oppositeColor
+        start[1] - 1 >= 0 &&
+        (board[start[0] + 2][start[1] - 1].type == "n/a" ||
+          board[start[0] + 2][start[1] - 1].color == oppositeColor)
       ) {
         possibleMoves.push([start[0] + 2, start[1] - 1]);
       }
     }
 
     //i+1 && i-1, j+2
-    if (start[0] + 1 < 8 && start[0] - 1 >= 0 && start[1] + 2 < 8) {
+    if (start[1] + 2 < 8) {
       if (
-        board[start[0] + 1][start[1] + 2].type == "n/a" ||
-        board[start[0] + 1][start[1] + 2].color == oppositeColor
+        start[0] + 1 < 8 &&
+        (board[start[0] + 1][start[1] + 2].type == "n/a" ||
+          board[start[0] + 1][start[1] + 2].color == oppositeColor)
       ) {
         possibleMoves.push([start[0] + 1, start[1] + 2]);
       }
       if (
-        board[start[0] - 1][start[1] + 2].type == "n/a" ||
-        board[start[0] - 1][start[1] + 2].color == oppositeColor
+        start[0] - 1 >= 0 &&
+        (board[start[0] - 1][start[1] + 2].type == "n/a" ||
+          board[start[0] - 1][start[1] + 2].color == oppositeColor)
       ) {
         possibleMoves.push([start[0] - 1, start[1] + 2]);
       }
     }
     //i+1 && i-1, j-2
-    if (start[0] + 1 < 8 && start[0] - 1 >= 0 && start[1] - 2 >= 0) {
+    if (start[1] - 2 >= 0) {
       if (
-        board[start[0] + 1][start[1] - 2].type == "n/a" ||
-        board[start[0] + 1][start[1] - 2].color == oppositeColor
+        start[0] + 1 < 8 &&
+        (board[start[0] + 1][start[1] - 2].type == "n/a" ||
+          board[start[0] + 1][start[1] - 2].color == oppositeColor)
       ) {
         possibleMoves.push([start[0] + 1, start[1] - 2]);
       }
       if (
-        board[start[0] - 1][start[1] - 2].type == "n/a" ||
-        board[start[0] - 1][start[1] - 2].color == oppositeColor
+        start[0] - 1 >= 0 &&
+        (board[start[0] - 1][start[1] - 2].type == "n/a" ||
+          board[start[0] - 1][start[1] - 2].color == oppositeColor)
       ) {
         possibleMoves.push([start[0] - 1, start[1] - 2]);
       }
     }
     //i-2, j-1 && j+1
-    if (start[0] - 2 >= 0 && start[1] + 1 < 8 && start[1] - 1 >= 0) {
+    if (start[0] - 2 >= 0) {
       if (
-        board[start[0] - 2][start[1] + 1].type == "n/a" ||
-        board[start[0] - 2][start[1] + 1].color == oppositeColor
+        start[1] + 1 < 8 &&
+        (board[start[0] - 2][start[1] + 1].type == "n/a" ||
+          board[start[0] - 2][start[1] + 1].color == oppositeColor)
       ) {
         possibleMoves.push([start[0] - 2, start[1] + 1]);
       }
       if (
-        board[start[0] - 2][start[1] - 1].type == "n/a" ||
-        board[start[0] - 2][start[1] - 1].color == oppositeColor
+        start[1] - 1 >= 0 &&
+        (board[start[0] - 2][start[1] - 1].type == "n/a" ||
+          board[start[0] - 2][start[1] - 1].color == oppositeColor)
       ) {
         possibleMoves.push([start[0] - 2, start[1] - 1]);
       }
@@ -898,7 +1076,7 @@ const GameScreen = (props) => {
     return possibleMoves;
   };
 
-  //king movement STILL NEEDS CASTLING SUPPORT
+  //king movement
   const moveKing = (start, board) => {
     var possibleMoves = [];
     var color = board[start[0]][start[1]].color;
@@ -999,9 +1177,43 @@ const GameScreen = (props) => {
     return possibleMoves;
   };
 
+  //
+  const restartGame = () => {
+    setPieces(loadPieces());
+    setSelected(false);
+    setMoveArray([]);
+    setPossibleMoves([]);
+    setPlayerTurn(true);
+    setCheckmate(false);
+  };
+
   return (
     <View style={styles.screen}>
-      <Text style={{ justifyContent: "center" }}>{possibleMoves}</Text>
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={checkmate}
+        onRequestClose={() => {
+          Alert.alert("Modal has been closed.");
+        }}
+      >
+        <View style={styles.centeredView}>
+          <View style={styles.modalView}>
+            <Text style={styles.modalText}>{displayPlayer()} Wins!</Text>
+
+            <TouchableHighlight
+              style={{ ...styles.openButton, backgroundColor: "#2196F3" }}
+              onPress={() => {
+                restartGame();
+              }}
+            >
+              <Text style={styles.textStyle}>Play Again!</Text>
+            </TouchableHighlight>
+          </View>
+        </View>
+      </Modal>
+
+      <Text style={{ justifyContent: "center" }}>{displayPlayer()}</Text>
       <View style={styles.board}>{createBoard()}</View>
     </View>
   );
@@ -1045,6 +1257,43 @@ const styles = StyleSheet.create({
     backgroundColor: "transparent",
     width: "100%",
     height: "100%",
+  },
+
+  centeredView: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 22,
+  },
+  modalView: {
+    margin: 20,
+    backgroundColor: "white",
+    borderRadius: 20,
+    padding: 35,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  openButton: {
+    backgroundColor: "#F194FF",
+    borderRadius: 20,
+    padding: 10,
+    elevation: 2,
+  },
+  textStyle: {
+    color: "white",
+    fontWeight: "bold",
+    textAlign: "center",
+  },
+  modalText: {
+    marginBottom: 15,
+    textAlign: "center",
   },
 });
 
