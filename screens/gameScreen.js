@@ -228,6 +228,7 @@ const GameScreen = (props) => {
     return piece;
   };
 
+  //Setup all the pieces on the board. Used to set the state of the pieces array.
   const loadPieces = () => {
     var board = [];
     for (var i = 0; i < 8; ++i) {
@@ -251,6 +252,7 @@ const GameScreen = (props) => {
   const [playerTurn, setPlayerTurn] = useState(true);
   const [checkmate, setCheckmate] = useState(false);
 
+  //Helper function to display the player based on the playerTurn State.
   const displayPlayer = () => {
     if (playerTurn) {
       return "White";
@@ -259,6 +261,7 @@ const GameScreen = (props) => {
     }
   };
 
+  //Executes whenever a user presses on a square.
   const handleSelect = (key, file, rank) => {
     setSelected(key);
     setMoveArray(moveArray.concat([file, rank]));
@@ -295,6 +298,8 @@ const GameScreen = (props) => {
     return possibleMoves;
   };
 
+  //Checks to see if the two squares left and right
+  //of the king are safe squares. Once of the conditions required to castle.
   const isCastlingSafe = (board, color) => {
     var kingPosition = findKing(board, color);
     var possibleMoves = [];
@@ -326,6 +331,9 @@ const GameScreen = (props) => {
     return flag;
   };
 
+  //This function loops through an array of possible moves and tests them
+  //to see if perfoming that specific move puts the players own king in check.
+  //If it does, that possible move is removed from the array.
   const validatePossibleMoves = (start, possibleMoves) => {
     var color = pieces[start[0]][start[1]].color;
     var oppositeColor = getOppositeColor(color);
@@ -447,6 +455,7 @@ const GameScreen = (props) => {
     return flag;
   };
 
+  //Scans the board to see if a specific player is in checkmate.
   const scanForMate = (board, color) => {
     for (var i = 0; i < 8; ++i) {
       for (var j = 0; j < 8; ++j) {
@@ -475,7 +484,7 @@ const GameScreen = (props) => {
   };
 
   //Move a piece in the pieces array so the board rerenders and
-  //displays the players move. WIP
+  //displays the players move.
   const movePiece = () => {
     //Can only move a piece if we have two coordinates (which a coordinate consists of two numbers so 2x2=4)
     if (moveArray.length >= 4) {
@@ -750,7 +759,6 @@ const GameScreen = (props) => {
     return { possibleMove: possibleMove, flag: flag };
   };
 
-  //Scan the board for all possible moves the selected rook can make.
   const moveBishop = (start, board) => {
     var possibleMoves = [];
     var color = board[start[0]][start[1]].color;
@@ -815,9 +823,6 @@ const GameScreen = (props) => {
     return possibleMoves;
   };
 
-  //Scan the board for all possible moves the selected rook can make.
-  //See moveBishop(start) for more information, the functions are very similar
-  //and moveBishop has additional documentation.
   const moveRook = (start, board) => {
     var possibleMoves = [];
     var color = board[start[0]][start[1]].color;
@@ -866,8 +871,6 @@ const GameScreen = (props) => {
     return possibleMoves;
   };
 
-  //queen is just the combination of a rook and bishop so I just call their
-  //possible move finding methods and combine the results.
   const moveQueen = (start, board) => {
     var rookMoves = moveRook(start, board);
     var bishopMoves = moveBishop(start, board);
@@ -875,7 +878,6 @@ const GameScreen = (props) => {
     return queenMoves;
   };
 
-  //Movement for pawn
   const movePawn = (start, board) => {
     var possibleMoves = [];
     var color = board[start[0]][start[1]].color;
@@ -998,7 +1000,6 @@ const GameScreen = (props) => {
     return possibleMoves;
   };
 
-  //knight movement
   const moveKnight = (start, board) => {
     var possibleMoves = [];
     var color = board[start[0]][start[1]].color;
@@ -1076,7 +1077,6 @@ const GameScreen = (props) => {
     return possibleMoves;
   };
 
-  //king movement
   const moveKing = (start, board) => {
     var possibleMoves = [];
     var color = board[start[0]][start[1]].color;
@@ -1177,7 +1177,7 @@ const GameScreen = (props) => {
     return possibleMoves;
   };
 
-  //
+  //Return all state to its original states.
   const restartGame = () => {
     setPieces(loadPieces());
     setSelected(false);
