@@ -1,38 +1,84 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
   StyleSheet,
   Button,
   Image,
+  TextInput,
+  Modal,
   TouchableOpacity,
 } from "react-native";
 
 const MatchMakingScreen = (props) => {
-    const [activeGamesList, setActiveGamesList] = useState([]);
+  const [activeGamesList, setActiveGamesList] = useState([]);
+  const [newGameName, setNewGameName] = useState();
+  const [modalVisible, setModalVisible] = useState(false);
 
-    const displayGames = () => {
-        activeGamesList.forEach(function(game){
-            //create a game room
-        });
-    };
+  const displayGames = () => {
+    var component = [];
+    activeGamesList.forEach(function (game) {
+      component.push(<View><Text>{game}</Text></View>)
+    });
+    return component;
+  };
+
+  const handleNewGame = () => {
+    props.socket.emit("create game", newGameName);
+    setModalVisible(!modalVisible);
+    props.onPageChange("game", "white");
+  };
+
+  const handleJoinGame = () => {
+    props.socket.emit("join game", "Abc");
+    props.onPageChange("game", "black");
+  }
+
+  props.socket.on("game created", (games) => {
+    setActiveGamesList(activeGamesList.concat(games));
+  });
+
   return (
     <View>
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => {
+          Alert.alert("Modal has been closed.");
+        }}
+      >
+        <View style={styles.centeredView}>
+          <View style={styles.modalView}>
+            <Text style={styles.modalText}>Create Game: </Text>
+            <TextInput onChangeText={(text) => setNewGameName(text)} placeholder="Name..." />
+            <TouchableOpacity
+              style={{ ...styles.openButton, backgroundColor: "#2196F3", margin: 15, padding: 15 }}
+              onPress={() => {
+                handleNewGame();
+              }}
+            >
+              <Text style={styles.textStyle}>Confirm</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
       <View style={styles.back}>
         <TouchableOpacity onPress={() => props.onPageChange("home")}>
           <Text style={styles.text}> back </Text>
         </TouchableOpacity>
+        {displayGames()}
       </View>
-      <View style= {styles.myView}>
-        <Text style= {styles.text}> Chose Game Style</Text>
-        <View style= {styles.touchable}>
-          <TouchableOpacity onPress={() => props.onPageChange("game")}>
-            <Text style={styles.text}> Local Game </Text>
+      <View style={styles.myView}>
+        <Text style={styles.text}> Chose Game Style</Text>
+        <View style={styles.touchable}>
+          <TouchableOpacity onPress={() => setModalVisible(true)}>
+            <Text style={styles.text}> Create Game </Text>
           </TouchableOpacity>
         </View>
-        <View style= {styles.touchable}>
-          <TouchableOpacity onPress={() => alert("Online Game Place Holder")}>
-            <Text style={styles.text}> Online Game </Text>
+        <View style={styles.touchable}>
+          <TouchableOpacity onPress={() => handleJoinGame()}>
+            <Text style={styles.text}> Join Game </Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -46,11 +92,11 @@ const styles = StyleSheet.create({
   },
 
   menu: {
-    alignContent:'center'
+    alignContent: "center",
   },
 
   back: {
-    position: 'absolute',
+    position: "absolute",
     top: -230,
     left: -75,
   },
@@ -66,13 +112,44 @@ const styles = StyleSheet.create({
     borderBottomWidth: 4,
     borderBottomStartRadius: 45,
     borderBottomEndRadius: 45,
-  }, 
+  },
 
   text: {
     fontSize: 18,
-    fontWeight: 'bold',
-    alignItems: 'center',
-  }
+    fontWeight: "bold",
+    alignItems: "center",
+  },
+
+  centeredView: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 22,
+  },
+  modalView: {
+    margin: 20,
+    backgroundColor: "white",
+    borderRadius: 20,
+    padding: 35,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  textStyle: {
+    color: "white",
+    fontWeight: "bold",
+    textAlign: "center",
+  },
+  modalText: {
+    marginBottom: 15,
+    textAlign: "center",
+  },
 });
 
 export default MatchMakingScreen;

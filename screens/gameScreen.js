@@ -12,7 +12,7 @@ import Square from "../components/square";
 
 const GameScreen = (props) => {
   const loadPieceImage = (color, type) => {
-    var image;
+    var image = null;
     if (color == "white") {
       if (type == "pawn") {
         image = (
@@ -107,6 +107,7 @@ const GameScreen = (props) => {
 
   const loadPiece = (i, j) => {
     var piece;
+    var image;
 
     //white backrank
     if (i == 0) {
@@ -115,7 +116,7 @@ const GameScreen = (props) => {
         piece = {
           type: "rook",
           color: "white",
-          image: loadPieceImage("white", "rook"),
+          // image: loadPieceImage("white", "rook"),
         };
       }
       //knights
@@ -123,7 +124,7 @@ const GameScreen = (props) => {
         piece = {
           type: "knight",
           color: "white",
-          image: loadPieceImage("white", "knight"),
+          //image: loadPieceImage("white", "knight"),
         };
       }
       //bishops
@@ -131,7 +132,7 @@ const GameScreen = (props) => {
         piece = {
           type: "bishop",
           color: "white",
-          image: loadPieceImage("white", "bishop"),
+          //image: loadPieceImage("white", "bishop"),
         };
       }
       //queen
@@ -139,7 +140,7 @@ const GameScreen = (props) => {
         piece = {
           type: "queen",
           color: "white",
-          image: loadPieceImage("white", "queen"),
+          //image: loadPieceImage("white", "queen"),
         };
       }
       //king
@@ -148,7 +149,7 @@ const GameScreen = (props) => {
           type: "king",
           color: "white",
           castlingRights: true,
-          image: loadPieceImage("white", "king"),
+          //image: loadPieceImage("white", "king"),
         };
       }
     }
@@ -159,7 +160,7 @@ const GameScreen = (props) => {
         type: "pawn",
         color: "white",
         enPassantFlag: false,
-        image: loadPieceImage("white", "pawn"),
+        //image: loadPieceImage("white", "pawn"),
       };
     }
 
@@ -169,7 +170,7 @@ const GameScreen = (props) => {
         type: "pawn",
         color: "black",
         enPassantFlag: false,
-        image: loadPieceImage("black", "pawn"),
+        //image: loadPieceImage("black", "pawn"),
       };
     }
 
@@ -180,7 +181,7 @@ const GameScreen = (props) => {
         piece = {
           type: "rook",
           color: "black",
-          image: loadPieceImage("black", "rook"),
+          //image: loadPieceImage("black", "rook"),
         };
       }
       //knights
@@ -188,7 +189,7 @@ const GameScreen = (props) => {
         piece = {
           type: "knight",
           color: "black",
-          image: loadPieceImage("black", "knight"),
+          //image: loadPieceImage("black", "knight"),
         };
       }
       //bishops
@@ -196,7 +197,7 @@ const GameScreen = (props) => {
         piece = {
           type: "bishop",
           color: "black",
-          image: loadPieceImage("black", "bishop"),
+          //image: loadPieceImage("black", "bishop"),
         };
       }
       //queen
@@ -204,7 +205,7 @@ const GameScreen = (props) => {
         piece = {
           type: "queen",
           color: "black",
-          image: loadPieceImage("black", "queen"),
+          //image: loadPieceImage("black", "queen"),
         };
       }
       //king
@@ -213,7 +214,7 @@ const GameScreen = (props) => {
           type: "king",
           color: "black",
           castlingRights: true,
-          image: loadPieceImage("black", "king"),
+          //image: loadPieceImage("black", "king"),
         };
       }
     }
@@ -226,6 +227,70 @@ const GameScreen = (props) => {
     }
 
     return piece;
+  };
+
+  const loadImage = (i, j) => {
+    var image;
+
+    //white backrank
+    if (i == 0) {
+      //rooks
+      if (j == 0 || j == 7) {
+        image = loadPieceImage("white", "rook");
+      }
+      //knights
+      if (j == 1 || j == 6) {
+        image = loadPieceImage("white", "knight");
+      }
+      //bishops
+      if (j == 2 || j == 5) {
+        image = loadPieceImage("white", "bishop");
+      }
+      //queen
+      if (j == 3) {
+        image = loadPieceImage("white", "queen");
+      }
+      //king
+      if (j == 4) {
+        image = loadPieceImage("white", "king");
+      }
+    }
+    //white pawns
+    else if (i == 1) {
+      image = loadPieceImage("white", "pawn");
+    }
+
+    //black pawns
+    else if (i == 6) {
+      image = loadPieceImage("black", "pawn");
+    }
+
+    //black backrank
+    else if (i == 7) {
+      //rooks
+      if (j == 0 || j == 7) {
+        image = loadPieceImage("black", "rook");
+      }
+      //knights
+      if (j == 1 || j == 6) {
+        image = loadPieceImage("black", "knight");
+      }
+      //bishops
+      if (j == 2 || j == 5) {
+        image = loadPieceImage("black", "bishop");
+      }
+      //queen
+      if (j == 3) {
+        image = loadPieceImage("black", "queen");
+      }
+      //king
+      if (j == 4) {
+        image = loadPieceImage("black", "king");
+      }
+    } else {
+      image = null;
+    }
+    return image;
   };
 
   //Setup all the pieces on the board. Used to set the state of the pieces array.
@@ -241,23 +306,83 @@ const GameScreen = (props) => {
     return board;
   };
 
+  const loadImages = () => {
+    var images = [];
+    for (var i = 0; i < 8; ++i) {
+      var row = [];
+      for (var j = 0; j < 8; ++j) {
+        row.push(loadImage(i, j));
+      }
+      images.push(row);
+    }
+    return images;
+  };
+
+  const initPlayerTurn = () => {
+    if (props.playerColor === "white") {
+      return true;
+    } else {
+      return false;
+    }
+  };
+
   //pieces keeps track of the state of all pieces on the board.
   const [pieces, setPieces] = useState(loadPieces());
+  const [images, setImages] = useState(loadImages());
   //Selected keeps track of the square that the user has last pressed.
   const [selected, setSelected] = useState(false);
 
   const [moveArray, setMoveArray] = useState([]);
   const [possibleMoves, setPossibleMoves] = useState([]);
   //True for whites turn, false for blacks turn.
-  const [playerTurn, setPlayerTurn] = useState(true);
+  const [playerTurn, setPlayerTurn] = useState(initPlayerTurn());
   const [checkmate, setCheckmate] = useState(false);
 
-  //Helper function to display the player based on the playerTurn State.
+  //Listening to the server for when the other player takes there turn.
+  //When the other player uses their turn, update the backend board and
+  //the ui board, then set turn to true.
+  props.socket.on("turn start", (boardState) => {
+    setPieces(boardState);
+    //handleTurnStart(boardState);
+  });
+
+  const handleTurnStart = (pieces) => {
+    updateImages(boardState);
+    setPlayerTurn(!playerTurn);
+    return;
+  };
+  //Given a board, update the visual board to match the backend board.
+  const updateImages = (boardState) => {
+    console.log("how many times?");
+    var board = [];
+    for (var i = 0; i < 8; ++i) {
+      var row = [];
+      for (var j = 0; j < 8; ++j) {
+        var pieceType = boardState[i][j].type;
+        var color = boardState[i][j].color;
+        row.push(loadPieceImage(color, pieceType));
+      }
+      board.push(row);
+    }
+    setImages(board);
+  };
+
+  //Helper function to display the player based on the playerTurn State
+  //and the player's color.
   const displayPlayer = () => {
-    if (playerTurn) {
-      return "White";
-    } else {
-      return "Black";
+    if (props.playerColor === "white") {
+      if (playerTurn) {
+        return "White's Turn";
+      } else {
+        return "Black's Turn";
+      }
+    }
+    if (props.playerColor === "black") {
+      if (playerTurn) {
+        return "Black's Turn";
+      } else {
+        return "White's Turn";
+      }
     }
   };
 
@@ -364,7 +489,6 @@ const GameScreen = (props) => {
             type: "n/a",
             color: "n/a",
             enPassantFlag: false,
-            image: <Image />,
           };
         }
         if (board[move[0]][move[1]].type == "n/a" && move[1] == start[1] - 1) {
@@ -372,7 +496,6 @@ const GameScreen = (props) => {
             type: "n/a",
             color: "n/a",
             enPassantFlag: false,
-            image: <Image />,
           };
         }
       }
@@ -392,7 +515,6 @@ const GameScreen = (props) => {
       board[start[0]][start[1]] = {
         type: "n/a",
         color: "n/a",
-        image: <Image />,
       };
 
       //If the move can be done without putting the unit in check add to the list of moves.
@@ -405,7 +527,6 @@ const GameScreen = (props) => {
       board[move[0]][move[1]] = {
         type: prevType,
         color: prevColor,
-        image: <Image />,
       };
 
       //CREATE A FUNCTION FOR THIS.
@@ -415,7 +536,6 @@ const GameScreen = (props) => {
             type: "pawn",
             color: oppositeColor,
             enPassantFlag: true,
-            image: <Image />,
           };
         }
         if (board[move[0]][move[1]].type == "n/a" && move[1] == start[1] - 1) {
@@ -423,7 +543,6 @@ const GameScreen = (props) => {
             type: "pawn",
             color: oppositeColor,
             enPassantFlag: true,
-            image: <Image />,
           };
         }
       }
@@ -497,8 +616,11 @@ const GameScreen = (props) => {
       possibleMoves = validatePossibleMoves(start, possibleMoves); //Updated possible moves that won't put our own king in check.
       var flag = false; //If a piece is moved, flag is set to true, and that is how we know the player actually made their move.
 
-      //Make sure players don't move their opponents piece.
-      if(playerTurn && temp[start[0]][start[1]].color == "black" || !playerTurn && temp[start[0]][start[1]].color == "white"){
+      //If its not a players turn don't let them move a piece!
+      if (
+        !playerTurn ||
+        (playerTurn && temp[start[0]][start[1]].color != props.playerColor)
+      ) {
         setMoveArray([]);
         setPossibleMoves([]);
         setSelected();
@@ -520,16 +642,20 @@ const GameScreen = (props) => {
                 temp[start[0]][start[1] + 3] = {
                   type: "n/a",
                   color: "n/a",
-                  image: <Image />,
+                  //image: <Image />,
                 };
+                images[start[0]][start[1] + 1] = images[start[0]][start[1] + 3];
+                images[start[0]][start[1] + 3] = null;
               }
               if (start[1] - 2 == end[1]) {
                 temp[start[0]][start[1] - 1] = temp[start[0]][start[1] - 4];
                 temp[start[0]][start[1] - 4] = {
                   type: "n/a",
                   color: "n/a",
-                  image: <Image />,
+                  //image: <Image />,
                 };
+                images[start[0]][start[1] - 1] = images[start[0]][start[1] - 4];
+                images[start[0]][start[1] - 4] = null;
               }
               temp[start[0]][start[1]].castlingRights = false;
             }
@@ -567,15 +693,17 @@ const GameScreen = (props) => {
             }
 
             //Move the piece, set the old space to be empty.
-            temp[end[0]][end[1]] = temp[start[0]][start[1]];
-            temp[start[0]][start[1]] = {
+            pieces[end[0]][end[1]] = pieces[start[0]][start[1]];
+            pieces[start[0]][start[1]] = {
               type: "n/a",
               color: "n/a",
-              image: <Image />,
+              //image: <Image />,
             };
+            images[end[0]][end[1]] = images[start[0]][start[1]];
+            images[start[0]][start[1]] = null;
 
             //Logic for controlling whether a pawn promotes.
-            pawnPromotion(temp, end);
+            pawnPromotion(pieces, end);
           }
         });
       }
@@ -589,6 +717,8 @@ const GameScreen = (props) => {
         } else {
           setPlayerTurn(!playerTurn);
         }
+
+        props.socket.emit("turn end", pieces);
       }
 
       //Piece didn't move.
@@ -601,32 +731,32 @@ const GameScreen = (props) => {
   };
 
   //If a pawn reaches to the final rank of the board, promote it to a queen.
-  const pawnPromotion = (temp, end) => {
+  const pawnPromotion = (board, end) => {
     //pawn promotion
-    if (temp[end[0]][end[1]].type == "pawn") {
+    if (board[end[0]][end[1]].type == "pawn") {
       if (end[0] == 0) {
-        temp[end[0]][end[1]] = {
+        board[end[0]][end[1]] = {
           type: "queen",
           color: "black",
-          image: (
-            <Image
-              style={styles.piece}
-              source={require("../assets/BlackQueen.png")}
-            ></Image>
-          ),
         };
+        images[end[0]][end[1]] = (
+          <Image
+            style={styles.piece}
+            source={require("../assets/BlackQueen.png")}
+          ></Image>
+        );
       }
       if (end[0] == 7) {
-        temp[end[0]][end[1]] = {
+        board[end[0]][end[1]] = {
           type: "queen",
           color: "white",
-          image: (
-            <Image
-              style={styles.piece}
-              source={require("../assets/WhiteQueen.png")}
-            ></Image>
-          ),
         };
+        images[end[0]][end[1]] = (
+          <Image
+            style={styles.piece}
+            source={require("../assets/WhiteQueen.png")}
+          ></Image>
+        );
       }
     }
   };
@@ -653,7 +783,7 @@ const GameScreen = (props) => {
       var j = 0;
       var row = [];
       flag = !flag;
-      pieces[i].forEach(function (item) {
+      images[i].forEach(function (item) {
         if (!flag) {
           if (!item) {
             row.push(
@@ -680,7 +810,7 @@ const GameScreen = (props) => {
                 onSquarePress={handleSelect}
                 style={styles.lightSquare}
               >
-                {item.image}
+                {item}
               </Square>
             );
           }
@@ -711,7 +841,7 @@ const GameScreen = (props) => {
                 onSquarePress={handleSelect}
                 style={styles.darkSquare}
               >
-                {item.image}
+                {item}
               </Square>
             );
           }
