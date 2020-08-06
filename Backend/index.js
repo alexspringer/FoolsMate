@@ -25,9 +25,17 @@ io.on("connection", (socket) => {
     games[gameName].push({ id: socket.id, color: "black" });
   });
 
-  socket.on("turn end", (boardState) => {
-    console.log("how many times?");
-    socket.broadcast.emit("turn start", boardState);
+  socket.on("turn end", (move) => {
+    console.log(move);
+    socket.broadcast.emit("turn start", move);
+  });
+
+  socket.on("checkmate", ()=> {
+    socket.broadcast.emit("game over");
+  });
+
+  socket.on("disconnect", () =>{
+    console.log(socket.id + " disconnected.")
   });
 });
 

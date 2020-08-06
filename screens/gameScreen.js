@@ -6,6 +6,7 @@ import {
   Image,
   Modal,
   TouchableHighlight,
+  Button,
 } from "react-native";
 
 import Square from "../components/square";
@@ -116,7 +117,7 @@ const GameScreen = (props) => {
         piece = {
           type: "rook",
           color: "white",
-          // image: loadPieceImage("white", "rook"),
+          image: loadPieceImage("white", "rook"),
         };
       }
       //knights
@@ -124,7 +125,7 @@ const GameScreen = (props) => {
         piece = {
           type: "knight",
           color: "white",
-          //image: loadPieceImage("white", "knight"),
+          image: loadPieceImage("white", "knight"),
         };
       }
       //bishops
@@ -132,7 +133,7 @@ const GameScreen = (props) => {
         piece = {
           type: "bishop",
           color: "white",
-          //image: loadPieceImage("white", "bishop"),
+          image: loadPieceImage("white", "bishop"),
         };
       }
       //queen
@@ -140,7 +141,7 @@ const GameScreen = (props) => {
         piece = {
           type: "queen",
           color: "white",
-          //image: loadPieceImage("white", "queen"),
+          image: loadPieceImage("white", "queen"),
         };
       }
       //king
@@ -149,7 +150,7 @@ const GameScreen = (props) => {
           type: "king",
           color: "white",
           castlingRights: true,
-          //image: loadPieceImage("white", "king"),
+          image: loadPieceImage("white", "king"),
         };
       }
     }
@@ -160,7 +161,7 @@ const GameScreen = (props) => {
         type: "pawn",
         color: "white",
         enPassantFlag: false,
-        //image: loadPieceImage("white", "pawn"),
+        image: loadPieceImage("white", "pawn"),
       };
     }
 
@@ -170,7 +171,7 @@ const GameScreen = (props) => {
         type: "pawn",
         color: "black",
         enPassantFlag: false,
-        //image: loadPieceImage("black", "pawn"),
+        image: loadPieceImage("black", "pawn"),
       };
     }
 
@@ -181,7 +182,7 @@ const GameScreen = (props) => {
         piece = {
           type: "rook",
           color: "black",
-          //image: loadPieceImage("black", "rook"),
+          image: loadPieceImage("black", "rook"),
         };
       }
       //knights
@@ -189,7 +190,7 @@ const GameScreen = (props) => {
         piece = {
           type: "knight",
           color: "black",
-          //image: loadPieceImage("black", "knight"),
+          image: loadPieceImage("black", "knight"),
         };
       }
       //bishops
@@ -197,7 +198,7 @@ const GameScreen = (props) => {
         piece = {
           type: "bishop",
           color: "black",
-          //image: loadPieceImage("black", "bishop"),
+          image: loadPieceImage("black", "bishop"),
         };
       }
       //queen
@@ -205,7 +206,7 @@ const GameScreen = (props) => {
         piece = {
           type: "queen",
           color: "black",
-          //image: loadPieceImage("black", "queen"),
+          image: loadPieceImage("black", "queen"),
         };
       }
       //king
@@ -214,7 +215,7 @@ const GameScreen = (props) => {
           type: "king",
           color: "black",
           castlingRights: true,
-          //image: loadPieceImage("black", "king"),
+          image: loadPieceImage("black", "king"),
         };
       }
     }
@@ -227,70 +228,6 @@ const GameScreen = (props) => {
     }
 
     return piece;
-  };
-
-  const loadImage = (i, j) => {
-    var image;
-
-    //white backrank
-    if (i == 0) {
-      //rooks
-      if (j == 0 || j == 7) {
-        image = loadPieceImage("white", "rook");
-      }
-      //knights
-      if (j == 1 || j == 6) {
-        image = loadPieceImage("white", "knight");
-      }
-      //bishops
-      if (j == 2 || j == 5) {
-        image = loadPieceImage("white", "bishop");
-      }
-      //queen
-      if (j == 3) {
-        image = loadPieceImage("white", "queen");
-      }
-      //king
-      if (j == 4) {
-        image = loadPieceImage("white", "king");
-      }
-    }
-    //white pawns
-    else if (i == 1) {
-      image = loadPieceImage("white", "pawn");
-    }
-
-    //black pawns
-    else if (i == 6) {
-      image = loadPieceImage("black", "pawn");
-    }
-
-    //black backrank
-    else if (i == 7) {
-      //rooks
-      if (j == 0 || j == 7) {
-        image = loadPieceImage("black", "rook");
-      }
-      //knights
-      if (j == 1 || j == 6) {
-        image = loadPieceImage("black", "knight");
-      }
-      //bishops
-      if (j == 2 || j == 5) {
-        image = loadPieceImage("black", "bishop");
-      }
-      //queen
-      if (j == 3) {
-        image = loadPieceImage("black", "queen");
-      }
-      //king
-      if (j == 4) {
-        image = loadPieceImage("black", "king");
-      }
-    } else {
-      image = null;
-    }
-    return image;
   };
 
   //Setup all the pieces on the board. Used to set the state of the pieces array.
@@ -306,29 +243,16 @@ const GameScreen = (props) => {
     return board;
   };
 
-  const loadImages = () => {
-    var images = [];
-    for (var i = 0; i < 8; ++i) {
-      var row = [];
-      for (var j = 0; j < 8; ++j) {
-        row.push(loadImage(i, j));
-      }
-      images.push(row);
-    }
-    return images;
-  };
-
   const initPlayerTurn = () => {
     if (props.playerColor === "white") {
-      return true;
-    } else {
       return false;
+    } else {
+      return true;
     }
   };
 
   //pieces keeps track of the state of all pieces on the board.
   const [pieces, setPieces] = useState(loadPieces());
-  const [images, setImages] = useState(loadImages());
   //Selected keeps track of the square that the user has last pressed.
   const [selected, setSelected] = useState(false);
 
@@ -337,34 +261,65 @@ const GameScreen = (props) => {
   //True for whites turn, false for blacks turn.
   const [playerTurn, setPlayerTurn] = useState(initPlayerTurn());
   const [checkmate, setCheckmate] = useState(false);
+  const [opponentMove, setOpponentMove] = useState({
+    start: [4, 4],
+    end: [5, 5],
+  });
 
   //Listening to the server for when the other player takes there turn.
   //When the other player uses their turn, update the backend board and
   //the ui board, then set turn to true.
-  props.socket.on("turn start", (boardState) => {
-    setPieces(boardState);
-    //handleTurnStart(boardState);
+  //setTurnFlag(true);
+
+  props.socket.on("turn start", (move) => {
+    setOpponentMove(move);
   });
 
-  const handleTurnStart = (pieces) => {
-    updateImages(boardState);
+  props.socket.on("game over", () => {
+    setCheckmate(true);
+  });
+
+  useEffect(() => {
+    onTurnStart(opponentMove);
     setPlayerTurn(!playerTurn);
-    return;
-  };
-  //Given a board, update the visual board to match the backend board.
-  const updateImages = (boardState) => {
-    console.log("how many times?");
-    var board = [];
-    for (var i = 0; i < 8; ++i) {
-      var row = [];
-      for (var j = 0; j < 8; ++j) {
-        var pieceType = boardState[i][j].type;
-        var color = boardState[i][j].color;
-        row.push(loadPieceImage(color, pieceType));
-      }
-      board.push(row);
+  }, [opponentMove]);
+
+  const onTurnStart = (move) => {
+    var start = move.start;
+    var end = move.end;
+    var enPassantFlag = move.enPassantFlag;
+    var castleFlag = move.castleFlag;
+
+    if (castleFlag) {
+      //check to see if the move the user is making is castling, In this case we also move the rook.
+      castleMoveHelper(start, end);
     }
-    setImages(board);
+
+    //If we are moving a pawn, we need to manage the en passant flag, and check to see if
+    //the move being performed is en passant.
+    if (enPassantFlag) {
+      enPassantMoveHelper(start, end);
+    }
+
+    if (pieces[start[0]][start[1]].type === "king") {
+      pieces[start[0]][start[1]].castlingRights = false;
+    }
+
+    
+    if (pieces[start[0]][start[1]].type === "pawn") {
+      if (end[0] + 2 == start[0] || end[0] - 2 == start[0]) {
+        pieces[start[0]][start[1]].enPassantFlag = true;
+      } else if (pieces[start[0]][start[1]].enPassantFlag) {
+        pieces[start[0]][start[1]].enPassantFlag = false;
+      }
+    }
+
+    pieces[end[0]][end[1]] = pieces[start[0]][start[1]];
+    pieces[start[0]][start[1]] = {
+      type: "n/a",
+      color: "n/a",
+      image: <Image />,
+    };
   };
 
   //Helper function to display the player based on the playerTurn State
@@ -602,6 +557,57 @@ const GameScreen = (props) => {
     return; //Should never actually get here.
   };
 
+  //moves the rook when castling
+  const castleMoveHelper = (start, end) => {
+    var castleFlag = false;
+    //castle king side
+    if (start[1] + 2 == end[1]) {
+      pieces[start[0]][start[1] + 1] = pieces[start[0]][start[1] + 3];
+      pieces[start[0]][start[1] + 3] = {
+        type: "n/a",
+        color: "n/a",
+        image: <Image />,
+      };
+      castleFlag = true;
+    }
+    //castle queen side
+    if (start[1] - 2 == end[1]) {
+      pieces[start[0]][start[1] - 1] = pieces[start[0]][start[1] - 4];
+      pieces[start[0]][start[1] - 4] = {
+        type: "n/a",
+        color: "n/a",
+        image: <Image />,
+      };
+      castleFlag = true;
+    }
+    pieces[start[0]][start[1]].castlingRights = false;
+    return castleFlag;
+  };
+
+  //deletes the pawn the gets taken in passing.
+  const enPassantMoveHelper = (start, end) => {
+    var enPassantFlag = false;
+    if (pieces[end[0]][end[1]].type == "n/a" && end[1] == start[1] + 1) {
+      pieces[start[0]][start[1] + 1] = {
+        type: "n/a",
+        color: "n/a",
+        enPassantFlag: false,
+        image: <Image />,
+      };
+      enPassantFlag = true;
+    }
+    if (pieces[end[0]][end[1]].type == "n/a" && end[1] == start[1] - 1) {
+      pieces[start[0]][start[1] - 1] = {
+        type: "n/a",
+        color: "n/a",
+        enPassantFlag: false,
+        image: <Image />,
+      };
+      enPassantFlag = true;
+    }
+    return enPassantFlag;
+  };
+
   //Move a piece in the pieces array so the board rerenders and
   //displays the players move.
   const movePiece = () => {
@@ -611,15 +617,16 @@ const GameScreen = (props) => {
       var end = [moveArray[2], moveArray[3]]; //Square we are moving the piece to
       var color = pieces[start[0]][start[1]].color;
       var oppositeColor = getOppositeColor(color);
-      var temp = pieces; //This actually mutates the pieces array since it is the same reference in memory.
       var possibleMoves = findPossibleMoves(start, pieces); //Find the possible moves the piece we are moving can make.
       possibleMoves = validatePossibleMoves(start, possibleMoves); //Updated possible moves that won't put our own king in check.
       var flag = false; //If a piece is moved, flag is set to true, and that is how we know the player actually made their move.
+      var enPassantFlag = false;
+      var castleFlag = false;
 
       //If its not a players turn don't let them move a piece!
       if (
         !playerTurn ||
-        (playerTurn && temp[start[0]][start[1]].color != props.playerColor)
+        (playerTurn && pieces[start[0]][start[1]].color != props.playerColor)
       ) {
         setMoveArray([]);
         setPossibleMoves([]);
@@ -628,67 +635,26 @@ const GameScreen = (props) => {
       }
 
       //Make sure that a piece is not being moved to a square where a friendly piece is on.
-      if (temp[end[0]][end[1]].color != temp[start[0]][start[1]].color) {
+      if (pieces[end[0]][end[1]].color != pieces[start[0]][start[1]].color) {
         possibleMoves.forEach(function (m) {
           if (end[0] == m[0] && end[1] == m[1]) {
             //User picked a valid move for the piece to make.
             flag = true; //Piece is going to move so the players turn ends after this.
 
             //If we move a king we need to revoke its castling rights.
-            if (temp[start[0]][start[1]].type == "king") {
+            if (pieces[start[0]][start[1]].type == "king") {
               //check to see if the move the user is making is castling, In this case we also move the rook.
-              if (start[1] + 2 == end[1]) {
-                temp[start[0]][start[1] + 1] = temp[start[0]][start[1] + 3];
-                temp[start[0]][start[1] + 3] = {
-                  type: "n/a",
-                  color: "n/a",
-                  //image: <Image />,
-                };
-                images[start[0]][start[1] + 1] = images[start[0]][start[1] + 3];
-                images[start[0]][start[1] + 3] = null;
-              }
-              if (start[1] - 2 == end[1]) {
-                temp[start[0]][start[1] - 1] = temp[start[0]][start[1] - 4];
-                temp[start[0]][start[1] - 4] = {
-                  type: "n/a",
-                  color: "n/a",
-                  //image: <Image />,
-                };
-                images[start[0]][start[1] - 1] = images[start[0]][start[1] - 4];
-                images[start[0]][start[1] - 4] = null;
-              }
-              temp[start[0]][start[1]].castlingRights = false;
+              castleFlag = castleMoveHelper(start, end);
             }
 
             //If we are moving a pawn, we need to manage the en passant flag, and check to see if
             //the move being performed is en passant.
-            if (temp[start[0]][start[1]].type == "pawn") {
-              if (
-                temp[end[0]][end[1]].type == "n/a" &&
-                end[1] == start[1] + 1
-              ) {
-                temp[start[0]][start[1] + 1] = {
-                  type: "n/a",
-                  color: "n/a",
-                  enPassantFlag: false,
-                  image: <Image />,
-                };
-              }
-              if (
-                temp[end[0]][end[1]].type == "n/a" &&
-                end[1] == start[1] - 1
-              ) {
-                temp[start[0]][start[1] - 1] = {
-                  type: "n/a",
-                  color: "n/a",
-                  enPassantFlag: false,
-                  image: <Image />,
-                };
-              }
+            if (pieces[start[0]][start[1]].type == "pawn") {
+              enPassantFlag = enPassantMoveHelper(start, end);
               if (end[0] + 2 == start[0] || end[0] - 2 == start[0]) {
-                temp[start[0]][start[1]].enPassantFlag = true;
-              } else if (temp[start[0]][start[1]].enPassantFlag) {
-                temp[start[0]][start[1]].enPassantFlag = false;
+                pieces[start[0]][start[1]].enPassantFlag = true;
+              } else if (pieces[start[0]][start[1]].enPassantFlag) {
+                pieces[start[0]][start[1]].enPassantFlag = false;
               }
             }
 
@@ -697,10 +663,10 @@ const GameScreen = (props) => {
             pieces[start[0]][start[1]] = {
               type: "n/a",
               color: "n/a",
-              //image: <Image />,
+              image: <Image />,
             };
-            images[end[0]][end[1]] = images[start[0]][start[1]];
-            images[start[0]][start[1]] = null;
+            //images[end[0]][end[1]] = images[start[0]][start[1]];
+            //images[start[0]][start[1]] = null;
 
             //Logic for controlling whether a pawn promotes.
             pawnPromotion(pieces, end);
@@ -712,13 +678,18 @@ const GameScreen = (props) => {
       if (flag) {
         setMoveArray([]);
         setPossibleMoves([]);
-        if (scanForMate(temp, oppositeColor)) {
+        if (scanForMate(pieces, oppositeColor)) {
           setCheckmate(true);
+          props.socket.emit("checkmate");
         } else {
           setPlayerTurn(!playerTurn);
         }
-
-        props.socket.emit("turn end", pieces);
+        props.socket.emit("turn end", {
+          start: start,
+          end: end,
+          castleFlag: castleFlag,
+          enPassantFlag: enPassantFlag,
+        });
       }
 
       //Piece didn't move.
@@ -738,25 +709,25 @@ const GameScreen = (props) => {
         board[end[0]][end[1]] = {
           type: "queen",
           color: "black",
+          image: (
+            <Image
+              style={styles.piece}
+              source={require("../assets/BlackQueen.png")}
+            ></Image>
+          ),
         };
-        images[end[0]][end[1]] = (
-          <Image
-            style={styles.piece}
-            source={require("../assets/BlackQueen.png")}
-          ></Image>
-        );
       }
       if (end[0] == 7) {
         board[end[0]][end[1]] = {
           type: "queen",
           color: "white",
+          image: (
+            <Image
+              style={styles.piece}
+              source={require("../assets/WhiteQueen.png")}
+            ></Image>
+          ),
         };
-        images[end[0]][end[1]] = (
-          <Image
-            style={styles.piece}
-            source={require("../assets/WhiteQueen.png")}
-          ></Image>
-        );
       }
     }
   };
@@ -783,7 +754,7 @@ const GameScreen = (props) => {
       var j = 0;
       var row = [];
       flag = !flag;
-      images[i].forEach(function (item) {
+      pieces[i].forEach(function (item) {
         if (!flag) {
           if (!item) {
             row.push(
@@ -810,7 +781,7 @@ const GameScreen = (props) => {
                 onSquarePress={handleSelect}
                 style={styles.lightSquare}
               >
-                {item}
+                {item.image}
               </Square>
             );
           }
@@ -841,7 +812,7 @@ const GameScreen = (props) => {
                 onSquarePress={handleSelect}
                 style={styles.darkSquare}
               >
-                {item}
+                {item.image}
               </Square>
             );
           }
@@ -1344,6 +1315,7 @@ const GameScreen = (props) => {
       </Modal>
 
       <Text style={{ justifyContent: "center" }}>{displayPlayer()}</Text>
+      <Button title="test" onPress={() => test()} />
       <View style={styles.board}>{createBoard()}</View>
     </View>
   );

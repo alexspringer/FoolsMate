@@ -8,7 +8,7 @@ import MatchMakingScreen from "./screens/matchMakingScreen";
 
 import io from 'socket.io-client';
 import GameFinderScreen from "./screens/gameFinderScreen";
-const socket = io("https://2a9d94d35792.ngrok.io");
+const socket = io("https://999366b37f60.ngrok.io");
 
 export default function App() {
   //console.log(socket);
