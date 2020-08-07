@@ -1,10 +1,8 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
   StyleSheet,
-  Button,
-  Image,
   TextInput,
   Modal,
   TouchableOpacity,
@@ -15,10 +13,23 @@ const MatchMakingScreen = (props) => {
   const [newGameName, setNewGameName] = useState();
   const [modalVisible, setModalVisible] = useState(false);
 
+  useEffect(() => {
+    props.socket.emit("get-active-games");
+    props.socket.on("active games", (games) => {
+      setActiveGamesList(Object.keys(games));
+    });
+  }, []);
+
   const displayGames = () => {
     var component = [];
+    var id = 0;
     activeGamesList.forEach(function (game) {
-      component.push(<View><Text>{game}</Text></View>)
+      component.push(
+        <TouchableOpacity key={id} onPress={() => handleJoinGame(game)}>
+          <Text style={styles.text}>{game}</Text>
+        </TouchableOpacity>
+      );
+      ++id;
     });
     return component;
   };
@@ -29,17 +40,18 @@ const MatchMakingScreen = (props) => {
     props.onPageChange("game", "white");
   };
 
-  const handleJoinGame = () => {
-    props.socket.emit("join game", "Abc");
+  const handleJoinGame = (gameName) => {
+    props.socket.emit("join game", gameName);
     props.onPageChange("game", "black");
-  }
+  };
 
+  //When another user creates a game, add this to the list of active games.
   props.socket.on("game created", (games) => {
     setActiveGamesList(activeGamesList.concat(games));
   });
 
   return (
-    <View>
+    <View style={styles.screen}>
       <Modal
         animationType="slide"
         transparent={true}
@@ -51,9 +63,17 @@ const MatchMakingScreen = (props) => {
         <View style={styles.centeredView}>
           <View style={styles.modalView}>
             <Text style={styles.modalText}>Create Game: </Text>
-            <TextInput onChangeText={(text) => setNewGameName(text)} placeholder="Name..." />
+            <TextInput
+              onChangeText={(text) => setNewGameName(text)}
+              placeholder="Name..."
+            />
             <TouchableOpacity
-              style={{ ...styles.openButton, backgroundColor: "#2196F3", margin: 15, padding: 15 }}
+              style={{
+                ...styles.openButton,
+                backgroundColor: "#2196F3",
+                margin: 15,
+                padding: 15,
+              }}
               onPress={() => {
                 handleNewGame();
               }}
@@ -67,18 +87,13 @@ const MatchMakingScreen = (props) => {
         <TouchableOpacity onPress={() => props.onPageChange("home")}>
           <Text style={styles.text}> back </Text>
         </TouchableOpacity>
-        {displayGames()}
       </View>
+      <View style={styles.gameContainer}>{displayGames()}</View>
       <View style={styles.myView}>
         <Text style={styles.text}> Chose Game Style</Text>
         <View style={styles.touchable}>
           <TouchableOpacity onPress={() => setModalVisible(true)}>
             <Text style={styles.text}> Create Game </Text>
-          </TouchableOpacity>
-        </View>
-        <View style={styles.touchable}>
-          <TouchableOpacity onPress={() => handleJoinGame()}>
-            <Text style={styles.text}> Join Game </Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -89,10 +104,15 @@ const MatchMakingScreen = (props) => {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
+    justifyContent: "space-around",
   },
 
-  menu: {
-    alignContent: "center",
+  myView: {
+
+  },
+
+  gameContainer: {
+    alignItems: "center",
   },
 
   back: {

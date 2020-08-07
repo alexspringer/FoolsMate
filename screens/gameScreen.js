@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -6,8 +6,13 @@ import {
   Image,
   Modal,
   TouchableHighlight,
-  Button,
+  Dimensions,
+  LayoutAnimation,
+  TouchableOpacity,
 } from "react-native";
+
+const screenWidth = Math.round(Dimensions.get("window").width);
+const screenHeight = Math.round(Dimensions.get("window").height);
 
 import Square from "../components/square";
 
@@ -305,7 +310,6 @@ const GameScreen = (props) => {
       pieces[start[0]][start[1]].castlingRights = false;
     }
 
-    
     if (pieces[start[0]][start[1]].type === "pawn") {
       if (end[0] + 2 == start[0] || end[0] - 2 == start[0]) {
         pieces[start[0]][start[1]].enPassantFlag = true;
@@ -1288,6 +1292,11 @@ const GameScreen = (props) => {
     setCheckmate(false);
   };
 
+  const handleForfeit = () => {
+    props.socket.emit("forfeit");
+    props.onPageChange("matchmaking");
+  };
+
   return (
     <View style={styles.screen}>
       <Modal
@@ -1315,8 +1324,14 @@ const GameScreen = (props) => {
       </Modal>
 
       <Text style={{ justifyContent: "center" }}>{displayPlayer()}</Text>
-      <Button title="test" onPress={() => test()} />
+
       <View style={styles.board}>{createBoard()}</View>
+      <TouchableOpacity
+        style={styles.touchable}
+        onPress={() => handleForfeit()}
+      >
+        <Text style={styles.textStyle}> Forfeit </Text>
+      </TouchableOpacity>
     </View>
   );
 };
@@ -1327,6 +1342,11 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     marginTop: "20%",
+  },
+
+  touchable: {
+    marginBottom: "10%",
+    borderWidth: 2,
   },
 
   board: {
@@ -1343,16 +1363,16 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "#1BC91B",
-    width: "12.5%",
-    height: 50,
+    width: screenWidth / 8,
+    height: screenWidth / 8,
   },
 
   lightSquare: {
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "#f0f0f0",
-    width: "12.5%",
-    height: 50,
+    width: screenWidth / 8,
+    height: screenWidth / 8,
   },
 
   piece: {
@@ -1382,17 +1402,20 @@ const styles = StyleSheet.create({
     shadowRadius: 3.84,
     elevation: 5,
   },
+
   openButton: {
     backgroundColor: "#F194FF",
     borderRadius: 20,
     padding: 10,
     elevation: 2,
   },
+
   textStyle: {
-    color: "white",
     fontWeight: "bold",
+    fontSize: 30,
     textAlign: "center",
   },
+
   modalText: {
     marginBottom: 15,
     textAlign: "center",
