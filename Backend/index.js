@@ -37,7 +37,6 @@ io.on("connection", (socket) => {
     var playersInGame = games[gameName];
     //Only send broadcast if we have two players.
     if (playersInGame.length > 1) {
-      console.log("TRUE");
       //if the sockets ids match, we want to send the move to the other player.
       if (playersInGame[0].id === socket.id) {
         sendToPlayer = playersInGame[1].id;
@@ -50,8 +49,36 @@ io.on("connection", (socket) => {
     }
   });
 
-  socket.on("checkmate", () => {
-    socket.broadcast.emit("game over");
+  socket.on("forfeit", () => {
+    var sendToPlayer = false;
+    var gameName = players[socket.id];
+    var playersInGame = games[gameName];
+    console.log(playersInGame);
+    //Only send broadcast if we have two players.
+    if (playersInGame.length > 1) {
+      //if the sockets ids match, we want to send the move to the other player.
+      if (playersInGame[0].id === socket.id) {
+        sendToPlayer = playersInGame[1].id;
+      }
+      //send to player 1
+      else {
+        sendToPlayer = playersInGame[0].id;
+      }
+
+      if (sendToPlayer) {
+        socket.to(sendToPlayer).broadcast.emit("enemy forfeit");
+      }
+    }
+    //get rid of the game name and remove the active game from the player.
+    delete games[gameName];
+    delete players[socket.id];
+    socket.emit("update-active-games", (games))
+    console.log(players);
+    console.log(games);
+  });
+
+  socket.on("player leave", () => {
+    delete players[socket.id];
   });
 
   socket.on("disconnect", () => {

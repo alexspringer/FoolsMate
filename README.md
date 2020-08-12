@@ -21,6 +21,8 @@ npm install
 
 If using VS code, download the ngrok.io plugin (https://marketplace.visualstudio.com/items?itemName=philnash.ngrok-for-vscode)
 
+To run ngrok on vs code press ctrl + shift + P, and in the prompt type ngrok start. Select port 3000. Ngrok will now give you a link you can copy to your clipboard. On line 9 of app.js you will need to change the value to the one your ngrok gives you. So replace copy_paste_ngrok_here with the value it gives you. (leave the quotes), const socket = io("copy_past_ngork_here");
+
 ## Client Modules Required
 
 To run the client the following modules must be installed:

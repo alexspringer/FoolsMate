@@ -8,6 +8,7 @@ import {
   TouchableHighlight,
   Dimensions,
   LayoutAnimation,
+  Alert,
   TouchableOpacity,
 } from "react-native";
 
@@ -113,7 +114,6 @@ const GameScreen = (props) => {
 
   const loadPiece = (i, j) => {
     var piece;
-    var image;
 
     //white backrank
     if (i == 0) {
@@ -250,45 +250,69 @@ const GameScreen = (props) => {
 
   const initPlayerTurn = () => {
     if (props.playerColor === "white") {
-      return false;
-    } else {
       return true;
+    } else {
+      return false;
     }
   };
 
   //pieces keeps track of the state of all pieces on the board.
   const [pieces, setPieces] = useState(loadPieces());
-  //Selected keeps track of the square that the user has last pressed.
-  const [selected, setSelected] = useState(false);
-
   const [moveArray, setMoveArray] = useState([]);
   const [possibleMoves, setPossibleMoves] = useState([]);
   //True for whites turn, false for blacks turn.
   const [playerTurn, setPlayerTurn] = useState(initPlayerTurn());
   const [checkmate, setCheckmate] = useState(false);
-  const [opponentMove, setOpponentMove] = useState({
-    start: [4, 4],
-    end: [5, 5],
-  });
+  const [opponentMove, setOpponentMove] = useState(false);
+
+  //Keep track of what to show the user. *visual states*
+  //Selected keeps track of the square that the user has last pressed.
+  const [selected, setSelected] = useState(false);
+  const [showAlert, setShowAlert] = useState(false);
 
   //Listening to the server for when the other player takes there turn.
   //When the other player uses their turn, update the backend board and
   //the ui board, then set turn to true.
   //setTurnFlag(true);
 
+  const displayWinner = () => {
+    if (props.playerColor === "white") {
+      if (playerTurn) {
+        return "White Wins!";
+      } else {
+        return "Black Wins!";
+      }
+    } else {
+      if (playerTurn) {
+        return "Black Wins!";
+      } else {
+        return "White Wins!";
+      }
+    }
+  };
+
+  props.socket.on("enemy forfeit", () => {
+    setShowAlert(true);
+  });
+
+  //Listen to the server to see if the other player in the game has made their move.
   props.socket.on("turn start", (move) => {
     setOpponentMove(move);
   });
 
-  props.socket.on("game over", () => {
-    setCheckmate(true);
-  });
-
+  //Once the opponents move has been registered,
   useEffect(() => {
-    onTurnStart(opponentMove);
-    setPlayerTurn(!playerTurn);
+    if (opponentMove) {
+      onTurnStart(opponentMove);
+      if (opponentMove.mateFlag) {
+        setCheckmate(true);
+      } else {
+        setPlayerTurn(!playerTurn);
+      }
+    }
   }, [opponentMove]);
 
+  //update the state of the board with the move the opponent just made.
   const onTurnStart = (move) => {
     var start = move.start;
     var end = move.end;
@@ -626,6 +650,7 @@ const GameScreen = (props) => {
       var flag = false; //If a piece is moved, flag is set to true, and that is how we know the player actually made their move.
       var enPassantFlag = false;
       var castleFlag = false;
+      var mateFlag = false;
 
       //If its not a players turn don't let them move a piece!
       if (
@@ -684,7 +709,7 @@ const GameScreen = (props) => {
         setPossibleMoves([]);
         if (scanForMate(pieces, oppositeColor)) {
           setCheckmate(true);
-          props.socket.emit("checkmate");
+          mateFlag = true;
         } else {
           setPlayerTurn(!playerTurn);
         }
@@ -693,6 +718,7 @@ const GameScreen = (props) => {
           end: end,
           castleFlag: castleFlag,
           enPassantFlag: enPassantFlag,
+          mateFlag: mateFlag,
         });
       }
 
@@ -1288,9 +1314,28 @@ const GameScreen = (props) => {
     setSelected(false);
     setMoveArray([]);
     setPossibleMoves([]);
-    setPlayerTurn(true);
+    setPlayerTurn(initPlayerTurn());
     setCheckmate(false);
+    setOpponentMove(false);
   };
+
+  const spawnAlert = () => {
+    if (showAlert) {
+
+      Alert.alert(
+        "Enemy Forfeit",
+        "You win!",
+        [
+          { text: "OK", onPress: () => handleLeave()}
+        ],
+      );
+    }
+  };
+
+  const handleLeave = () => {
+    props.socket.emit("player leave");
+    props.onPageChange("matchmaking")
+  }
 
   const handleForfeit = () => {
     props.socket.emit("forfeit");
@@ -1309,7 +1354,7 @@ const GameScreen = (props) => {
       >
         <View style={styles.centeredView}>
           <View style={styles.modalView}>
-            <Text style={styles.modalText}>{displayPlayer()} Wins!</Text>
+            <Text style={styles.modalText}>{displayWinner()}</Text>
 
             <TouchableHighlight
               style={{ ...styles.openButton, backgroundColor: "#2196F3" }}
@@ -1326,6 +1371,7 @@ const GameScreen = (props) => {
       <Text style={{ justifyContent: "center" }}>{displayPlayer()}</Text>
 
       <View style={styles.board}>{createBoard()}</View>
+      {spawnAlert()}
       <TouchableOpacity
         style={styles.touchable}
         onPress={() => handleForfeit()}
