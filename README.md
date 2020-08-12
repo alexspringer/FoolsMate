@@ -4,7 +4,7 @@ Foolsmate is a mobile chess application built by Alex Springer and Steven Lee. T
 
 When first starting Foolsmate, you will be brought to a matchmaking page. Here it will allow you to join an existing game, if one exists, or create a new game for others to join.
 
-[![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/hjm6A34AZE0.jpg)](https://www.youtube.com/watch?v=hjm6A34AZE0)
+[![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/hjm6A34AZE0/0.jpg)](https://www.youtube.com/watch?v=hjm6A34AZE0)
 
 All images for chess pieces in Foolsmate are from (https://commons.wikimedia.org/wiki/Category:PNG_chess_pieces/Standard_transparent)
 
