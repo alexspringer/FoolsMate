@@ -261,7 +261,7 @@ const GameScreen = (props) => {
   const [moveArray, setMoveArray] = useState([]);
   const [possibleMoves, setPossibleMoves] = useState([]);
   //True for whites turn, false for blacks turn.
-  const [playerTurn, setPlayerTurn] = useState(initPlayerTurn());
+  const [playerTurn, setPlayerTurn] = useState(false);
   const [checkmate, setCheckmate] = useState(false);
   const [opponentMove, setOpponentMove] = useState(false);
 
@@ -269,6 +269,7 @@ const GameScreen = (props) => {
   //Selected keeps track of the square that the user has last pressed.
   const [selected, setSelected] = useState(false);
   const [showAlert, setShowAlert] = useState(false);
+  const [gameStartFlag, setGameStartFlag] = useState(false);
 
   //Listening to the server for when the other player takes there turn.
   //When the other player uses their turn, update the backend board and
@@ -290,6 +291,13 @@ const GameScreen = (props) => {
       }
     }
   };
+
+  useEffect(() => {
+    props.socket.on("enemy join", () => {
+      setPlayerTurn(true);
+      setGameStartFlag(true);
+    });
+  }, []);
 
   props.socket.on("enemy forfeit", () => {
     setShowAlert(true);
@@ -354,7 +362,9 @@ const GameScreen = (props) => {
   //and the player's color.
   const displayPlayer = () => {
     if (props.playerColor === "white") {
-      if (playerTurn) {
+      if (!gameStartFlag) {
+        return "Waiting for opponent to join...";
+      } else if (playerTurn) {
         return "White's Turn";
       } else {
         return "Black's Turn";
@@ -1321,21 +1331,16 @@ const GameScreen = (props) => {
 
   const spawnAlert = () => {
     if (showAlert) {
-
-      Alert.alert(
-        "Enemy Forfeit",
-        "You win!",
-        [
-          { text: "OK", onPress: () => handleLeave()}
-        ],
-      );
+      Alert.alert("Enemy Forfeit", "You win!", [
+        { text: "OK", onPress: () => handleLeave() },
+      ]);
     }
   };
 
   const handleLeave = () => {
     props.socket.emit("player leave");
-    props.onPageChange("matchmaking")
-  }
+    props.onPageChange("matchmaking");
+  };
 
   const handleForfeit = () => {
     props.socket.emit("forfeit");

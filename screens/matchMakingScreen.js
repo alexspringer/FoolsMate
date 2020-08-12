@@ -9,6 +9,7 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
   TimePickerAndroid,
+  Alert,
 } from "react-native";
 
 const MatchMakingScreen = (props) => {
@@ -22,8 +23,8 @@ const MatchMakingScreen = (props) => {
       props.socket.on("active games", (games) => {
         setActiveGamesList(Object.keys(games));
       });
-      timerId = setTimeout(tick, 10000);
-    }, 10000);
+      timerId = setTimeout(tick, 5000);
+    }, 5000);
   }, []);
 
   props.socket.on("update-active-games", (games) => {});
@@ -54,7 +55,14 @@ const MatchMakingScreen = (props) => {
 
   const handleJoinGame = (gameName) => {
     props.socket.emit("join game", gameName);
-    props.onPageChange("game", "black");
+    props.socket.on("join status", (data) => {
+      if (data.flag) {
+        props.onPageChange("game", "black");
+      }
+      else{
+        Alert.alert(data.serverMessage)
+      }
+    });
   };
 
   //When another user creates a game, add this to the list of active games.

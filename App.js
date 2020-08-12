@@ -6,10 +6,9 @@ import GameScreen from "./screens/gameScreen";
 import MatchMakingScreen from "./screens/matchMakingScreen";
 
 import io from "socket.io-client";
-const socket = io("https://4c6ce09dd4d1.ngrok.io");
+const socket = io("https://f1ec097964c9.ngrok.io");
 
 export default function App() {
-  //console.log(socket);
   //Given the page name, switch the page that is loaded.
   const handlePageChange = (pageName, playerColor) => {
     LayoutAnimation.spring();
@@ -27,10 +26,6 @@ export default function App() {
       );
     }
   };
-
-  useEffect(() => {
-    console.log("yo");
-  }, []);
 
   //State to keep track of what page should be loaded.
   const [content, setContent] = useState(

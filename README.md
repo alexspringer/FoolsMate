@@ -1,10 +1,14 @@
 # FoolsMate
 
-Foolsmate is a mobile chess application built by Alex Springer and Steven Lee. The project was created with React Native and bootsraped with expo. which is an open source toolchain build around React Native to help build native IOS and Android projects using Javascript and React. (https://expo.io/).
-
-When first starting Foolsmate, you will be brought to a matchmaking page. Here it will allow you to join an existing game, if one exists, or create a new game for others to join.
+Foolsmate is a mobile chess application built by Alex Springer and Steven Lee. The project was created with React Native and bootsraped with expo, which is an open source toolchain build around React Native to help build native IOS and Android projects using Javascript and React. (https://expo.io/) (https://reactnative.dev/).
 
 [![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/hjm6A34AZE0/0.jpg)](https://www.youtube.com/watch?v=hjm6A34AZE0)
+
+In Foolsmate, you begin the app on the matchmaking screen where you can either create a new game or join in existing game.
+
+Doing either will bring you to the gamescreen, where you will be presented with a standard chessboard, where all pieces move as you would expect in your typical chess game.
+
+Foolsmate uses an MIT licence. More info can be found in LICENSE.txt
 
 All images for chess pieces in Foolsmate are from (https://commons.wikimedia.org/wiki/Category:PNG_chess_pieces/Standard_transparent)
 
@@ -66,3 +70,15 @@ In the second terminal navigate to the Foolsmate folder and type npm start to be
 Now the server is running on localhost:3000 and the client is running on exp:://localhost:19000 Enjoy the app!
 
 Now a QR code should appear in the new browser tab opened by the previous step. On iOS, simply open your camera app and scan the QR code. Press the pop up and the JavaScript bundle will be downloaded and executed on your device! For Android, navigate to the expo client app. Under the projects tab, press Scan QR code, and repeat the steps done on iOS.
+
+## Project structure
+
+For anyone wishing to build off the current build of Foolsmate, the current structure of the project is as follows:
+
+Foolsmate/Backend - This is where the foolsmate server lives. Client applications will communicate with the server to send information to other clients. For example, the server handles telling clients about active games, and informs clients of moves that their opponent makes during a game.
+
+Foolsmate/Screens - If you are looking to add new screens to the app, they should go here.
+
+Foolsmate/Components - If you are looking to add a new component that will be used repeatedly throughout the app, it should go here.
+
+Foolsmate/assets - Any external images, sounds, or other assets that the project needs should go here.
